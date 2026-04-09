@@ -6,10 +6,12 @@ import com.f1pulse.backend.model.Driver;
 import com.f1pulse.backend.model.DriverDTO;
 import com.f1pulse.backend.model.Race;
 import com.f1pulse.backend.model.RaceDTO;
+import com.f1pulse.backend.model.SyncMeta;
 import com.f1pulse.backend.model.Team;
 import com.f1pulse.backend.model.TeamDTO;
 import com.f1pulse.backend.repository.DriverRepository;
 import com.f1pulse.backend.repository.RaceRepository;
+import com.f1pulse.backend.repository.SyncMetaRepository;
 import com.f1pulse.backend.repository.TeamRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -28,15 +30,19 @@ public class F1Service {
     private final String url = "https://api.jolpi.ca/ergast/f1/current/drivers.json";
     private final String teamsUrl = "https://api.jolpi.ca/ergast/f1/current/constructors.json";
     private final String racesUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";
+    private final SyncMetaRepository syncMetaRepository;
 
     public F1Service(RestTemplate restTemplate,
                  DriverRepository driverRepository,
                  TeamRepository teamRepository,
-                 RaceRepository raceRepository) {
+                 RaceRepository raceRepository,
+                 SyncMetaRepository syncMetaRepository) {
+
     this.restTemplate = restTemplate;
     this.driverRepository = driverRepository;
     this.teamRepository = teamRepository;
     this.raceRepository = raceRepository;
+    this.syncMetaRepository = syncMetaRepository;
 }
 
 
@@ -70,21 +76,40 @@ public class F1Service {
     }
 
     public List<Driver> saveDrivers() {
-        driverRepository.deleteAll();
 
-        List<DriverDTO> dtos = getDrivers();
-        List<Driver> drivers = new ArrayList<>();
+    String key = "drivers";
 
-        for (DriverDTO dto : dtos) {
-            drivers.add(new Driver(
-                    dto.getName(),
-                    dto.getCode(),
-                    dto.getNationality()
-            ));
-        }
+    SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
 
-        return driverRepository.saveAll(drivers);
+    long currentTime = System.currentTimeMillis();
+
+    // 1 hour cache
+    long cacheDuration = 60 * 60 * 1000;
+
+    if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
+        System.out.println("Using cached drivers data");
+        return driverRepository.findAll();
     }
+
+    System.out.println("Fetching fresh drivers data");
+
+    driverRepository.deleteAll();
+
+    List<DriverDTO> dtos = getDrivers();
+    List<Driver> drivers = new ArrayList<>();
+
+    for (DriverDTO dto : dtos) {
+        drivers.add(new Driver(
+                dto.getName(),
+                dto.getCode(),
+                dto.getNationality()
+        ));
+    }
+
+    syncMetaRepository.save(new SyncMeta(key, currentTime));
+
+    return driverRepository.saveAll(drivers);
+}
 
     public List<Driver> getDriversFromDB() {
         return driverRepository.findAll();
@@ -120,20 +145,39 @@ public class F1Service {
     }
 
     public List<Team> saveTeams() {
-        teamRepository.deleteAll();
 
-        List<TeamDTO> dtos = getTeams();
-        List<Team> teams = new ArrayList<>();
+    String key = "teams";
 
-        for (TeamDTO dto : dtos) {
-            teams.add(new Team(
-                    dto.getName(),
-                    dto.getNationality()
-            ));
-        }
+    SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
+    long currentTime = System.currentTimeMillis();
 
-        return teamRepository.saveAll(teams);
+    long cacheDuration = 60 * 60 * 1000; // 1 hour
+
+    // 🔹 Use cache
+    if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
+        System.out.println("Using cached teams data");
+        return teamRepository.findAll();
     }
+
+    // 🔹 Fetch fresh data
+    System.out.println("Fetching fresh teams data");
+
+    teamRepository.deleteAll();
+
+    List<TeamDTO> dtos = getTeams();
+    List<Team> teams = new ArrayList<>();
+
+    for (TeamDTO dto : dtos) {
+        teams.add(new Team(
+                dto.getName(),
+                dto.getNationality()
+        ));
+    }
+
+    syncMetaRepository.save(new SyncMeta(key, currentTime));
+
+    return teamRepository.saveAll(teams);
+}
 
     public List<Team> getTeamsFromDB() {
         return teamRepository.findAll();
@@ -183,6 +227,22 @@ public class F1Service {
 
 public List<Race> saveRaces() {
 
+    String key = "races";
+
+    SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
+    long currentTime = System.currentTimeMillis();
+
+    long cacheDuration = 60 * 60 * 1000; // 1 hour
+
+    // 🔹 Use cache
+    if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
+        System.out.println("Using cached races data");
+        return raceRepository.findAll();
+    }
+
+    // 🔹 Fetch fresh data
+    System.out.println("Fetching fresh races data");
+
     raceRepository.deleteAll();
 
     List<RaceDTO> dtos = getRaces();
@@ -197,6 +257,8 @@ public List<Race> saveRaces() {
                 dto.getDate()
         ));
     }
+
+    syncMetaRepository.save(new SyncMeta(key, currentTime));
 
     return raceRepository.saveAll(races);
 }
