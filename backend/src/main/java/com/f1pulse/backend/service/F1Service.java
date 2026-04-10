@@ -1,20 +1,8 @@
 package com.f1pulse.backend.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.f1pulse.backend.model.Driver;
-import com.f1pulse.backend.model.DriverDTO;
-import com.f1pulse.backend.model.Race;
-import com.f1pulse.backend.model.RaceDTO;
-import com.f1pulse.backend.model.SyncMeta;
-import com.f1pulse.backend.model.Team;
-import com.f1pulse.backend.model.TeamDTO;
-import com.f1pulse.backend.repository.DriverRepository;
-import com.f1pulse.backend.repository.RaceRepository;
-import com.f1pulse.backend.repository.SyncMetaRepository;
-import com.f1pulse.backend.repository.TeamRepository;
+import com.f1pulse.backend.model.*;
+import com.f1pulse.backend.repository.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,248 +10,155 @@ import java.util.List;
 @Service
 public class F1Service {
 
-    private final RestTemplate restTemplate;
     private final DriverRepository driverRepository;
-    private final TeamRepository teamRepository; 
+    private final TeamRepository teamRepository;
     private final RaceRepository raceRepository;
-
-    private final String url = "https://api.jolpi.ca/ergast/f1/current/drivers.json";
-    private final String teamsUrl = "https://api.jolpi.ca/ergast/f1/current/constructors.json";
-    private final String racesUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";
     private final SyncMetaRepository syncMetaRepository;
+    private final F1ApiClient f1ApiClient;
 
-    public F1Service(RestTemplate restTemplate,
-                 DriverRepository driverRepository,
-                 TeamRepository teamRepository,
-                 RaceRepository raceRepository,
-                 SyncMetaRepository syncMetaRepository) {
+    public F1Service(DriverRepository driverRepository,
+                     TeamRepository teamRepository,
+                     RaceRepository raceRepository,
+                     SyncMetaRepository syncMetaRepository,
+                     F1ApiClient f1ApiClient) {
 
-    this.restTemplate = restTemplate;
-    this.driverRepository = driverRepository;
-    this.teamRepository = teamRepository;
-    this.raceRepository = raceRepository;
-    this.syncMetaRepository = syncMetaRepository;
-}
+        this.driverRepository = driverRepository;
+        this.teamRepository = teamRepository;
+        this.raceRepository = raceRepository;
+        this.syncMetaRepository = syncMetaRepository;
+        this.f1ApiClient = f1ApiClient;
+    }
 
+    // ================= DRIVERS =================
 
     public List<DriverDTO> getDrivers() {
-        try {
-            String response = restTemplate.getForObject(url, String.class);
-
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response);
-
-            JsonNode drivers = root
-                    .path("MRData")
-                    .path("DriverTable")
-                    .path("Drivers");
-
-            List<DriverDTO> result = new ArrayList<>();
-
-            for (JsonNode driver : drivers) {
-                String name = driver.path("givenName").asText() + " " + driver.path("familyName").asText();
-                String code = driver.path("code").asText();
-                String nationality = driver.path("nationality").asText();
-
-                result.add(new DriverDTO(name, code, nationality));
-            }
-
-            return result;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error parsing drivers: " + e.getMessage());
-        }
+        return f1ApiClient.fetchDrivers();
     }
 
     public List<Driver> saveDrivers() {
 
-    String key = "drivers";
+        String key = "drivers";
 
-    SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
+        SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
+        long currentTime = System.currentTimeMillis();
 
-    long currentTime = System.currentTimeMillis();
+        long cacheDuration = 60 * 60 * 1000;
 
-    // 1 hour cache
-    long cacheDuration = 60 * 60 * 1000;
+        if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
+            System.out.println("Using cached drivers data");
+            return driverRepository.findAll();
+        }
 
-    if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
-        System.out.println("Using cached drivers data");
-        return driverRepository.findAll();
+        System.out.println("Fetching fresh drivers data");
+
+        driverRepository.deleteAll();
+
+        List<DriverDTO> dtos = f1ApiClient.fetchDrivers();
+        List<Driver> drivers = new ArrayList<>();
+
+        for (DriverDTO dto : dtos) {
+            drivers.add(new Driver(
+                    dto.getName(),
+                    dto.getCode(),
+                    dto.getNationality()
+            ));
+        }
+
+        syncMetaRepository.save(new SyncMeta(key, currentTime));
+
+        return driverRepository.saveAll(drivers);
     }
-
-    System.out.println("Fetching fresh drivers data");
-
-    driverRepository.deleteAll();
-
-    List<DriverDTO> dtos = getDrivers();
-    List<Driver> drivers = new ArrayList<>();
-
-    for (DriverDTO dto : dtos) {
-        drivers.add(new Driver(
-                dto.getName(),
-                dto.getCode(),
-                dto.getNationality()
-        ));
-    }
-
-    syncMetaRepository.save(new SyncMeta(key, currentTime));
-
-    return driverRepository.saveAll(drivers);
-}
 
     public List<Driver> getDriversFromDB() {
         return driverRepository.findAll();
     }
 
+    // ================= TEAMS =================
 
     public List<TeamDTO> getTeams() {
-        try {
-            String response = restTemplate.getForObject(teamsUrl, String.class);
-
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response);
-
-            JsonNode teams = root
-                    .path("MRData")
-                    .path("ConstructorTable")
-                    .path("Constructors");
-
-            List<TeamDTO> result = new ArrayList<>();
-
-            for (JsonNode team : teams) {
-                String name = team.path("name").asText();
-                String nationality = team.path("nationality").asText();
-
-                result.add(new TeamDTO(name, nationality));
-            }
-
-            return result;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Error parsing teams: " + e.getMessage());
-        }
+        return f1ApiClient.fetchTeams();
     }
 
     public List<Team> saveTeams() {
 
-    String key = "teams";
+        String key = "teams";
 
-    SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
-    long currentTime = System.currentTimeMillis();
+        SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
+        long currentTime = System.currentTimeMillis();
 
-    long cacheDuration = 60 * 60 * 1000; // 1 hour
+        long cacheDuration = 60 * 60 * 1000;
 
-    // 🔹 Use cache
-    if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
-        System.out.println("Using cached teams data");
-        return teamRepository.findAll();
+        if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
+            System.out.println("Using cached teams data");
+            return teamRepository.findAll();
+        }
+
+        System.out.println("Fetching fresh teams data");
+
+        teamRepository.deleteAll();
+
+        List<TeamDTO> dtos = f1ApiClient.fetchTeams();
+        List<Team> teams = new ArrayList<>();
+
+        for (TeamDTO dto : dtos) {
+            teams.add(new Team(
+                    dto.getName(),
+                    dto.getNationality()
+            ));
+        }
+
+        syncMetaRepository.save(new SyncMeta(key, currentTime));
+
+        return teamRepository.saveAll(teams);
     }
-
-    // 🔹 Fetch fresh data
-    System.out.println("Fetching fresh teams data");
-
-    teamRepository.deleteAll();
-
-    List<TeamDTO> dtos = getTeams();
-    List<Team> teams = new ArrayList<>();
-
-    for (TeamDTO dto : dtos) {
-        teams.add(new Team(
-                dto.getName(),
-                dto.getNationality()
-        ));
-    }
-
-    syncMetaRepository.save(new SyncMeta(key, currentTime));
-
-    return teamRepository.saveAll(teams);
-}
 
     public List<Team> getTeamsFromDB() {
         return teamRepository.findAll();
     }
 
+    // ================= RACES =================
+
     public List<RaceDTO> getRaces() {
-    try {
-        String response = restTemplate.getForObject(racesUrl, String.class);
+        return f1ApiClient.fetchRaces();
+    }
 
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(response);
+    public List<Race> saveRaces() {
 
-        JsonNode races = root
-                .path("MRData")
-                .path("RaceTable")
-                .path("Races");
+        String key = "races";
 
-        List<RaceDTO> result = new ArrayList<>();
+        SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
+        long currentTime = System.currentTimeMillis();
 
-        for (JsonNode race : races) {
+        long cacheDuration = 60 * 60 * 1000;
 
-            String raceName = race.path("raceName").asText();
-            String date = race.path("date").asText();
+        if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
+            System.out.println("Using cached races data");
+            return raceRepository.findAll();
+        }
 
-            JsonNode circuit = race.path("Circuit");
-            String circuitName = circuit.path("circuitName").asText();
+        System.out.println("Fetching fresh races data");
 
-            JsonNode locationNode = circuit.path("Location");
-            String location = locationNode.path("locality").asText();
-            String country = locationNode.path("country").asText();
+        raceRepository.deleteAll();
 
-            result.add(new RaceDTO(
-                    raceName,
-                    circuitName,
-                    location,
-                    country,
-                    date
+        List<RaceDTO> dtos = f1ApiClient.fetchRaces();
+        List<Race> races = new ArrayList<>();
+
+        for (RaceDTO dto : dtos) {
+            races.add(new Race(
+                    dto.getRaceName(),
+                    dto.getCircuitName(),
+                    dto.getLocation(),
+                    dto.getCountry(),
+                    dto.getDate()
             ));
         }
 
-        return result;
+        syncMetaRepository.save(new SyncMeta(key, currentTime));
 
-    } catch (Exception e) {
-        throw new RuntimeException("Error parsing races: " + e.getMessage());
+        return raceRepository.saveAll(races);
     }
-}
 
-public List<Race> saveRaces() {
-
-    String key = "races";
-
-    SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
-    long currentTime = System.currentTimeMillis();
-
-    long cacheDuration = 60 * 60 * 1000; // 1 hour
-
-    // 🔹 Use cache
-    if (meta != null && (currentTime - meta.getLastSyncTime()) < cacheDuration) {
-        System.out.println("Using cached races data");
+    public List<Race> getRacesFromDB() {
         return raceRepository.findAll();
     }
-
-    // 🔹 Fetch fresh data
-    System.out.println("Fetching fresh races data");
-
-    raceRepository.deleteAll();
-
-    List<RaceDTO> dtos = getRaces();
-    List<Race> races = new ArrayList<>();
-
-    for (RaceDTO dto : dtos) {
-        races.add(new Race(
-                dto.getRaceName(),
-                dto.getCircuitName(),
-                dto.getLocation(),
-                dto.getCountry(),
-                dto.getDate()
-        ));
-    }
-
-    syncMetaRepository.save(new SyncMeta(key, currentTime));
-
-    return raceRepository.saveAll(races);
-}
-
-public List<Race> getRacesFromDB() {
-    return raceRepository.findAll();
-}
 }
