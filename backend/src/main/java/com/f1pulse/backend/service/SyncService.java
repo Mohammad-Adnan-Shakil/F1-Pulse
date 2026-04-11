@@ -91,10 +91,7 @@ public class SyncService {
     }
 }
 
-    // ================= TEAMS =================
 
-
-    
     public List<Team> syncTeams() {
         try {
      String key = "teams";
