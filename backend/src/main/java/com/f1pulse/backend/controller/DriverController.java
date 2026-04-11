@@ -4,6 +4,9 @@ import com.f1pulse.backend.model.Driver;
 import com.f1pulse.backend.repository.DriverRepository;
 import com.f1pulse.backend.service.F1Service;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 
 import java.util.List;
 
@@ -31,4 +34,9 @@ public class DriverController {
         driverService.saveDrivers();
         return "Drivers saved successfully";
     }
+
+    @GetMapping
+public Page<Driver> getDrivers(Pageable pageable) {
+    return driverService.getDriversPaginated(pageable);
+}
 }
