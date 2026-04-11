@@ -6,17 +6,19 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final CustomUserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(JWTUtil jwtUtil) {
+    public JwtAuthenticationFilter(JWTUtil jwtUtil, CustomUserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -43,10 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (isValid) {
                     String username = jwtUtil.extractUsername(token);
                     System.out.println("Username extracted: " + username); // DEBUG
+                    
+                    // Load user details from database using CustomUserDetailsService
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    System.out.println("User details loaded: " + userDetails.getUsername()); // DEBUG
+                    
+                    // Create authentication with user details and authorities
                     UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("Authentication set for user: " + username); // DEBUG
+                    System.out.println("Authentication set for user: " + username + " with authorities: " + userDetails.getAuthorities()); // DEBUG
                 }
             }
         } catch (Exception e) {
