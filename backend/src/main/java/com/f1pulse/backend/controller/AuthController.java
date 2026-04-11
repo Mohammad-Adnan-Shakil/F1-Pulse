@@ -1,6 +1,7 @@
 package com.f1pulse.backend.controller;
 
 import com.f1pulse.backend.dto.AuthRequest;
+import com.f1pulse.backend.dto.AuthResponse;
 import com.f1pulse.backend.model.User;
 import com.f1pulse.backend.repository.UserRepository;
 import com.f1pulse.backend.security.JWTUtil;
@@ -32,36 +33,37 @@ public class AuthController {
 
     // ✅ REGISTER
     @PostMapping("/register")
-    public String register(@Valid @RequestBody AuthRequest request) {
+public AuthResponse register(@Valid @RequestBody AuthRequest request) {
 
-        Optional<User> existing = userRepository.findByUsername(request.getUsername());
+    Optional<User> existing = userRepository.findByUsername(request.getUsername());
 
-        if (existing.isPresent()) {
-            throw new RuntimeException("Username already exists");
-        }
-
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole("USER");
-
-        userRepository.save(user);
-
-        return "User registered";
+    if (existing.isPresent()) {
+        throw new RuntimeException("Username already exists");
     }
 
-    // ✅ LOGIN
-    @PostMapping("/login")
-    public String login(@Valid @RequestBody AuthRequest request) {
+    User user = new User();
+    user.setUsername(request.getUsername());
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+    user.setRole("USER");
 
-        Optional<User> existing = userRepository.findByUsername(request.getUsername());
+    userRepository.save(user);
 
-        if (existing.isPresent() &&
-            passwordEncoder.matches(request.getPassword(), existing.get().getPassword())) {
+    return new AuthResponse("User registered successfully", null);
+}
 
-            return jwtUtil.generateToken(request.getUsername());
-        }
+   @PostMapping("/login")
+public AuthResponse login(@Valid @RequestBody AuthRequest request) {
 
-        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+    Optional<User> existing = userRepository.findByUsername(request.getUsername());
+
+    if (existing.isPresent() &&
+        passwordEncoder.matches(request.getPassword(), existing.get().getPassword())) {
+
+        String token = jwtUtil.generateToken(request.getUsername());
+
+        return new AuthResponse("Login successful", token);
     }
+
+    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+}
 }
