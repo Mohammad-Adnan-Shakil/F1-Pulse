@@ -1,6 +1,11 @@
 package com.f1pulse.backend.model;
-
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
+import jakarta.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "driver", uniqueConstraints = {
@@ -21,7 +26,6 @@ public class Driver {
     @Column(nullable = false)
     private String nationality;
 
-    // Constructors
     public Driver() {}
 
     public Driver(String name, String code, String nationality) {
@@ -30,37 +34,37 @@ public class Driver {
         this.nationality = nationality;
     }
 
-    // Getters
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
         return name;
     }
 
-    public String getCode() {
-        return code;
-    }
-
-    public String getNationality() {
-        return nationality;
-    }
-
-    // Setters
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getCode() {
+        return code;
     }
 
     public void setCode(String code) {
         this.code = code;
     }
 
+    public String getNationality() {
+        return nationality;
+    }
+
     public void setNationality(String nationality) {
         this.nationality = nationality;
     }
+
+    // getters & setters
 }

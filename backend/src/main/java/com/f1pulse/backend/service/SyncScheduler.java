@@ -13,19 +13,19 @@ public class SyncScheduler {
     }
 
     // Run every 1 hour
-    @Scheduled(fixedDelayString = "${sync.interval}")
+    @Scheduled(fixedDelayString = "3600000")
     public void syncDriversAutomatically() {
         System.out.println("Auto-syncing drivers...");
         syncService.syncDrivers();
     }
 
-    @Scheduled(fixedDelayString = "${sync.interval}")
+    @Scheduled(fixedDelayString = "3600000")
     public void syncTeamsAutomatically() {
         System.out.println("Auto-syncing teams...");
         syncService.syncTeams();
     }
 
-    @Scheduled(fixedDelayString = "${sync.interval}")
+    @Scheduled(fixedDelayString = "3600000")
     public void syncRacesAutomatically() {
         System.out.println("Auto-syncing races...");
         syncService.syncRaces();

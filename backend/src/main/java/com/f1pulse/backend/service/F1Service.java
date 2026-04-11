@@ -3,6 +3,8 @@ package com.f1pulse.backend.service;
 import com.f1pulse.backend.model.*;
 import com.f1pulse.backend.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -41,6 +43,10 @@ public class F1Service {
     public List<Driver> getDriversFromDB() {
         return driverRepository.findAll();
     }
+
+    public Page<Driver> getDriversPaginated(Pageable pageable) {
+    return driverRepository.findAll(pageable);
+}
 
     // ================= TEAMS =================
 

@@ -51,8 +51,8 @@ public class SyncService {
 
    
     public List<Driver> syncDrivers() {
-         try {
-    String key = "drivers";
+    try {
+        String key = "drivers";
 
         if (!shouldSync(key)) {
             log.info("Using cached drivers data");
@@ -61,28 +61,35 @@ public class SyncService {
 
         log.info("Syncing fresh drivers data");
 
-        driverRepository.deleteAll();
-
         List<DriverDTO> dtos = f1ApiClient.fetchDrivers();
         List<Driver> drivers = new ArrayList<>();
 
         for (DriverDTO dto : dtos) {
-            drivers.add(new Driver(
-                    dto.getName(),
-                    dto.getCode(),
-                    dto.getNationality()
-            ));
+
+            Driver existing = driverRepository.findByCode(dto.getCode());
+
+            if (existing != null) {
+                existing.setName(dto.getName());
+                existing.setNationality(dto.getNationality());
+                drivers.add(existing);
+            } else {
+                drivers.add(new Driver(
+                        dto.getName(),
+                        dto.getCode(),
+                        dto.getNationality()
+                ));
+            }
         }
 
         updateSyncTime(key);
 
         return driverRepository.saveAll(drivers);
-} catch (Exception e) {
-    log.error("Error syncing drivers: {}", e.getMessage());
-    throw e;
-}
-        
+
+    } catch (Exception e) {
+        log.error("Error syncing drivers: {}", e.getMessage());
+        throw e;
     }
+}
 
     // ================= TEAMS =================
 
@@ -99,17 +106,23 @@ public class SyncService {
 
         System.out.println("Syncing fresh teams data");
 
-        teamRepository.deleteAll();
-
         List<TeamDTO> dtos = f1ApiClient.fetchTeams();
         List<Team> teams = new ArrayList<>();
 
         for (TeamDTO dto : dtos) {
-            teams.add(new Team(
-                    dto.getName(),
-                    dto.getNationality()
-            ));
-        }
+
+    Team existing = teamRepository.findByName(dto.getName());
+
+    if (existing != null) {
+        existing.setNationality(dto.getNationality());
+        teams.add(existing);
+    } else {
+        teams.add(new Team(
+                dto.getName(),
+                dto.getNationality()
+        ));
+    }
+}
 
         updateSyncTime(key);
 
@@ -134,8 +147,6 @@ public class SyncService {
         }
 
         System.out.println("Syncing fresh races data");
-
-        raceRepository.deleteAll();
 
         List<RaceDTO> dtos = f1ApiClient.fetchRaces();
         List<Race> races = new ArrayList<>();
