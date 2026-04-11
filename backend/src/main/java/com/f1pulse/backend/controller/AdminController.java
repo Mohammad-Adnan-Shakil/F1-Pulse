@@ -1,8 +1,10 @@
 package com.f1pulse.backend.controller;
 
+import com.f1pulse.backend.dto.ApiResponse;
 import com.f1pulse.backend.dto.UserSummaryResponse;
 import com.f1pulse.backend.service.UserService;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +23,12 @@ public class AdminController {
     // ✅ Only ADMIN can access
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
-    public List<UserSummaryResponse> getAllUsers() {
-        return userService.getAllUsers();
+    public ResponseEntity<ApiResponse<List<UserSummaryResponse>>> getAllUsers() {
+
+        List<UserSummaryResponse> users = userService.getAllUsers();
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(true, "Users fetched successfully", users)
+        );
     }
 }
