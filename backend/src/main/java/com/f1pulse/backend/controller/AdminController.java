@@ -1,6 +1,6 @@
 package com.f1pulse.backend.controller;
 
-import com.f1pulse.backend.model.User;
+import com.f1pulse.backend.dto.UserSummaryResponse;
 import com.f1pulse.backend.repository.UserRepository;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,7 +21,14 @@ public class AdminController {
     // ✅ Only ADMIN can access
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserSummaryResponse> getAllUsers() {
+
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserSummaryResponse(
+                        user.getUsername(),
+                        user.getRole()
+                ))
+                .toList();
     }
 }
