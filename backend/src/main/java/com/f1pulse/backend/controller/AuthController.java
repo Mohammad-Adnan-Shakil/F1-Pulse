@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.f1pulse.backend.dto.ApiResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -29,12 +30,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    // ✅ LOGIN
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(
-            @Valid @RequestBody AuthRequest request
-    ) {
-        AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
-    }
+public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody AuthRequest request) {
+
+    AuthResponse response = authService.login(request);
+
+    return ResponseEntity.ok(
+            new ApiResponse<>(true, "Login successful", response)
+    );
+}
 }
