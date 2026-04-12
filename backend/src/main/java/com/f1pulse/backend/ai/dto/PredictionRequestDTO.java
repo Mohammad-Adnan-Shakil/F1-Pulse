@@ -1,43 +1,28 @@
 package com.f1pulse.backend.ai.dto;
 
+import jakarta.validation.constraints.*;
+
 public class PredictionRequestDTO {
 
-    private double gridPosition;
-    private double driverForm;
-    private double teamPerformance;
-    private double trackAffinity;
+    @NotNull
+    @Min(1)
+    @Max(20)
+    private Integer gridPosition;
 
-    public PredictionRequestDTO() {}
+    @NotNull
+    @Min(0)
+    @Max(10)
+    private Integer driverForm;
 
-    public double getGridPosition() {
-        return gridPosition;
-    }
+    @NotNull
+    @Min(0)
+    @Max(10)
+    private Integer teamPerformance;
 
-    public void setGridPosition(double gridPosition) {
-        this.gridPosition = gridPosition;
-    }
+    @NotNull
+    @Min(0)
+    @Max(10)
+    private Integer trackAffinity;
 
-    public double getDriverForm() {
-        return driverForm;
-    }
-
-    public void setDriverForm(double driverForm) {
-        this.driverForm = driverForm;
-    }
-
-    public double getTeamPerformance() {
-        return teamPerformance;
-    }
-
-    public void setTeamPerformance(double teamPerformance) {
-        this.teamPerformance = teamPerformance;
-    }
-
-    public double getTrackAffinity() {
-        return trackAffinity;
-    }
-
-    public void setTrackAffinity(double trackAffinity) {
-        this.trackAffinity = trackAffinity;
-    }
+    // getters & setters
 }

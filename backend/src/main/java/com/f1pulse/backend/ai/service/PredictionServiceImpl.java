@@ -18,34 +18,24 @@ public class PredictionServiceImpl implements PredictionService {
     }
 
     @Override
-    public PredictionResponseDTO predictRaceOutcome(PredictionRequestDTO request) {
-        try {
-            // ✅ Convert request → JSON
-            String inputJson = objectMapper.writeValueAsString(request);
-            System.out.println("INPUT JSON → " + inputJson);
+public PredictionResponseDTO predictRaceOutcome(PredictionRequestDTO request) {
+    try {
+        String inputJson = objectMapper.writeValueAsString(request);
 
-            // ✅ Call Python
-            String output = pythonExecutor.runPredictionScript(inputJson);
-            System.out.println("PYTHON OUTPUT → " + output);
+        System.out.println("AI Request: " + inputJson);
 
-            // ❗ Handle Python error response
-            if (output.contains("\"error\"")) {
-                throw new RuntimeException("Python error: " + output);
-            }
+        String output = pythonExecutor.runPredictionScript(inputJson);
 
-            // ✅ Parse response safely
-            PredictionResponseDTO response =
-                    objectMapper.readValue(output.trim(), PredictionResponseDTO.class);
+        System.out.println("AI Response: " + output);
 
-            // ❗ Extra safety (in case mapping fails silently)
-            if (response.getConfidence() == null) {
-                throw new RuntimeException("Invalid AI response: " + output);
-            }
-
-            return response;
-
-        } catch (Exception e) {
-            throw new RuntimeException("AI prediction failed: " + e.getMessage(), e);
+        if (output.contains("error")) {
+            throw new RuntimeException("AI error: " + output);
         }
+
+        return objectMapper.readValue(output, PredictionResponseDTO.class);
+
+    } catch (Exception e) {
+        throw new RuntimeException("AI prediction failed: " + e.getMessage(), e);
     }
+}
 }

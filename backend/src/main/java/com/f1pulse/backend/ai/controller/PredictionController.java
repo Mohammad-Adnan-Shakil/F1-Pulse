@@ -3,7 +3,9 @@ package com.f1pulse.backend.ai.controller;
 import com.f1pulse.backend.ai.dto.PredictionRequestDTO;
 import com.f1pulse.backend.ai.dto.PredictionResponseDTO;
 import com.f1pulse.backend.ai.service.PredictionService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import com.f1pulse.backend.dto.ApiResponse;;
 
 @RestController
 @RequestMapping("/api/ai")
@@ -16,7 +18,15 @@ public class PredictionController {
     }
 
     @PostMapping("/predict")
-    public PredictionResponseDTO predict(@RequestBody PredictionRequestDTO request) {
-        return predictionService.predictRaceOutcome(request);
-    }
+public ApiResponse<PredictionResponseDTO> predict(
+        @Valid @RequestBody PredictionRequestDTO request
+) {
+    PredictionResponseDTO response = predictionService.predictRaceOutcome(request);
+
+    return new ApiResponse<>(
+            true,
+            "Prediction successful",
+            response
+    );
+}
 }
