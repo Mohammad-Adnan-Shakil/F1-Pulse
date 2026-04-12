@@ -17,12 +17,12 @@ public class GlobalExceptionHandler {
     }
 
     // 🔴 USER ALREADY EXISTS
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ApiResponse<Object>> handleUserExists(UserAlreadyExistsException ex) {
-
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(new ApiResponse<>(false, ex.getMessage(), null));
-    }
+   @ExceptionHandler(UserAlreadyExistsException.class)
+public ResponseEntity<ApiResponse<?>> handleUserAlreadyExists(UserAlreadyExistsException ex) {
+    return ResponseEntity.badRequest().body(
+        new ApiResponse<>(false, ex.getMessage(), null)
+    );
+}
 
     // 🔴 GENERIC FALLBACK
     @ExceptionHandler(Exception.class)
