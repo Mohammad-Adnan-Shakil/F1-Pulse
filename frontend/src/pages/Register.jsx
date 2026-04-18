@@ -37,6 +37,7 @@ const Register = () => {
         navigate("/login");
       }, 1500);
     } catch (err) {
+        console.log(err);
       setError("Registration failed. Try again.");
     } finally {
       setLoading(false);

@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import MainLayout from "./layout/MainLayout";
 
-// Pages (we will create these next)
+// Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -19,12 +20,14 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected Routes */}
+      {/* Protected Routes with Layout */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <MainLayout>
+              <Dashboard />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -33,7 +36,9 @@ function App() {
         path="/ai"
         element={
           <ProtectedRoute>
-            <AIPage />
+            <MainLayout>
+              <AIPage />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -42,7 +47,9 @@ function App() {
         path="/drivers"
         element={
           <ProtectedRoute>
-            <Drivers />
+            <MainLayout>
+              <Drivers />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -51,7 +58,9 @@ function App() {
         path="/races"
         element={
           <ProtectedRoute>
-            <Races />
+            <MainLayout>
+              <Races />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -60,7 +69,9 @@ function App() {
         path="/constructors"
         element={
           <ProtectedRoute>
-            <Constructors />
+            <MainLayout>
+              <Constructors />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
@@ -69,15 +80,17 @@ function App() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <Profile />
+            <MainLayout>
+              <Profile />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
 
-      {/* Default Route */}
+      {/* Default */}
       <Route path="/" element={<Navigate to="/dashboard" />} />
 
-      {/* Fallback Route */}
+      {/* Fallback */}
       <Route path="*" element={<Navigate to="/dashboard" />} />
 
     </Routes>

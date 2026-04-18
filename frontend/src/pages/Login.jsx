@@ -33,6 +33,7 @@ const Login = () => {
       login(res.data); // store token + user
       navigate("/dashboard");
     } catch (err) {
+        console.log(err);
       setError("Invalid email or password");
     } finally {
       setLoading(false);

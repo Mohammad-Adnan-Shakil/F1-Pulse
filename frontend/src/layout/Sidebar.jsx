@@ -1,48 +1,73 @@
-import { Home, Users, Flag, BarChart3, Brain } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Sidebar = () => {
-  const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const menu = [
-    { name: "Dashboard", icon: Home, path: "/" },
-    { name: "Drivers", icon: Users, path: "/drivers" },
-    { name: "Teams", icon: Flag, path: "/teams" },
-    { name: "Races", icon: BarChart3, path: "/races" },
-    { name: "AI Predictions", icon: Brain, path: "/predictions" },
-  ];
+  const navItemClass = ({ isActive }) =>
+    `flex items-center px-4 py-3 text-sm font-medium transition-all duration-200 ${
+      isActive
+        ? "text-primary border-l-4 border-primary bg-[#111]"
+        : "text-textSecondary hover:text-textPrimary"
+    }`;
 
   return (
-    <div className="w-64 h-screen bg-[#0B0B0F] text-white flex flex-col p-6">
-      
-      {/* Logo */}
-      <h1 className="text-2xl font-bold text-[#E10600] mb-10">
-        F1 Pulse
-      </h1>
+    <div className="h-screen w-64 bg-background border-r border-border flex flex-col justify-between">
 
-      {/* Menu */}
-      <nav className="flex flex-col gap-3">
-        {menu.map((item, index) => {
-          const Icon = item.icon;
-          const isActive = location.pathname === item.path;
+      {/* TOP SECTION */}
+      <div>
+        {/* Logo */}
+        <div className="px-6 py-6">
+          <h1 className="font-display text-2xl tracking-widePlus text-textPrimary">
+            F1 <span className="text-primary">PULSE</span>
+          </h1>
+        </div>
 
-          return (
-            <Link
-              to={item.path}
-              key={index}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition ${
-                isActive
-                  ? "bg-[#1A1A22] text-white"
-                  : "text-gray-400 hover:bg-[#1A1A22] hover:text-white"
-              }`}
-            >
-              <Icon size={18} />
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
+        <div className="racing-divider"></div>
 
+        {/* Navigation */}
+        <nav className="mt-4 space-y-1">
+
+          <NavLink to="/dashboard" className={navItemClass}>
+            Dashboard
+          </NavLink>
+
+          <NavLink to="/ai" className={navItemClass}>
+            AI Intelligence
+          </NavLink>
+
+          <NavLink to="/drivers" className={navItemClass}>
+            Drivers
+          </NavLink>
+
+          <NavLink to="/races" className={navItemClass}>
+            Races
+          </NavLink>
+
+          <NavLink to="/constructors" className={navItemClass}>
+            Constructors
+          </NavLink>
+
+          <NavLink to="/profile" className={navItemClass}>
+            Profile
+          </NavLink>
+
+        </nav>
+      </div>
+
+      {/* BOTTOM SECTION */}
+      <div className="px-4 pb-6">
+        <button
+          onClick={() => {
+            logout();
+            navigate("/login");
+          }}
+          className="w-full text-left text-sm text-danger hover:underline"
+        >
+          Logout
+        </button>
+      </div>
     </div>
   );
 };
