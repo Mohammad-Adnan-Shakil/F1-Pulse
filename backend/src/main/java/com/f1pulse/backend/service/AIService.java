@@ -10,7 +10,6 @@ import com.f1pulse.backend.repository.TeamRepository;
 import com.f1pulse.backend.util.PythonExecutor;
 import com.f1pulse.backend.util.StatsUtil;
 import com.fasterxml.jackson.databind.JsonNode;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -53,14 +52,14 @@ public class AIService {
         // 🔹 3. REAL DATA EXTRACTION
 
         // Track
-        String trackId = latestRace.getCircuitName()
-                .toLowerCase()
-                .replace(" ", "_");
+        String trackId = latestRace.getCircuitName() != null
+                ? latestRace.getCircuitName().toLowerCase().replace(" ", "_")
+                : "unknown";
 
-        // Qualifying (fallback)
+        // Qualifying fallback
         int qualifyingPosition = latestRace.getPosition();
 
-        // 🔥 FIXED CONSTRUCTOR FETCH
+        // Constructor (SAFE + DB BASED)
         String constructorId = "unknown";
 
         try {
@@ -72,7 +71,7 @@ public class AIService {
                 if (driver.getTeamId() != null) {
                     Optional<Team> teamOpt = teamRepository.findById(driver.getTeamId());
 
-                    if (teamOpt.isPresent()) {
+                    if (teamOpt.isPresent() && teamOpt.get().getName() != null) {
                         constructorId = teamOpt.get()
                                 .getName()
                                 .toLowerCase()
@@ -80,45 +79,48 @@ public class AIService {
                     }
                 }
             }
-
         } catch (Exception e) {
             System.out.println("Constructor mapping fallback used");
         }
 
-        // 🔹 4. Build JSON
-        String jsonInput = String.format(
-            "{"
-            + "\"driver_id\":%d,"
-            + "\"avg_last_5\":%.2f,"
-            + "\"std_last_5\":%.2f,"
-            + "\"avg_last_10\":%.2f,"
-            + "\"std_last_10\":%.2f,"
-            + "\"last_race_position\":%.2f,"
-            + "\"qualifying_position\":%d,"
-            + "\"constructor_id\":\"%s\","
-            + "\"track_id\":\"%s\","
-            + "\"season_year\":%d,"
-            + "\"recent_avg_position_last_5\":%.2f,"
-            + "\"recent_std_last_5\":%.2f,"
-            + "\"grid_position\":%d,"
-            + "\"is_home_race\":%d"
-            + "}",
+        // 🔥 IMPORTANT DEBUG (DON'T REMOVE UNTIL STABLE)
+        System.out.println("Track: " + trackId);
+        System.out.println("Constructor: " + constructorId);
 
-            driverId,
-            avgLast5,
-            stdLast5,
-            avgLast10,
-            stdLast10,
-            lastRacePosition,
-            qualifyingPosition,
-            constructorId,
-            trackId,
-            2026,
-            avgLast5,
-            stdLast5,
-            qualifyingPosition,
-            0
+        // 🔹 4. Build JSON (CLEAN STRING)
+        String jsonInput = String.format(
+                "{"
+                        + "\"driver_id\":%d,"
+                        + "\"avg_last_5\":%.2f,"
+                        + "\"std_last_5\":%.2f,"
+                        + "\"avg_last_10\":%.2f,"
+                        + "\"std_last_10\":%.2f,"
+                        + "\"last_race_position\":%.2f,"
+                        + "\"qualifying_position\":%d,"
+                        + "\"constructor_id\":\"%s\","
+                        + "\"track_id\":\"%s\","
+                        + "\"season_year\":2026,"
+                        + "\"recent_avg_position_last_5\":%.2f,"
+                        + "\"recent_std_last_5\":%.2f,"
+                        + "\"grid_position\":%d,"
+                        + "\"is_home_race\":0"
+                        + "}",
+                driverId,
+                avgLast5,
+                stdLast5,
+                avgLast10,
+                stdLast10,
+                lastRacePosition,
+                qualifyingPosition,
+                constructorId,
+                trackId,
+                avgLast5,
+                stdLast5,
+                qualifyingPosition
         );
+
+        // 🔥 DEBUG (THIS IS CRITICAL)
+        System.out.println("JSON SENT TO PYTHON: " + jsonInput);
 
         // 🔹 5. Call Python
         String scriptPath = "ml/scripts/ai_orchestrator.py";
@@ -126,6 +128,7 @@ public class AIService {
 
         System.out.println("AI Orchestrator Output: " + result);
 
+        // 🔥 ERROR HANDLING
         if (result == null) {
             throw new RuntimeException("AI Orchestrator returned null response");
         }
@@ -142,6 +145,10 @@ public class AIService {
         res.setXgbPrediction(result.path("xgb_prediction").asDouble());
         res.setSimulationImpact(result.path("simulation_impact").asText());
         res.setFinalInsight(result.path("final_insight").asText());
+
+        // ✅ NEW
+        res.setConfidence(result.path("confidence").asDouble());
+        res.setConfidenceLabel(result.path("confidence_label").asText());
 
         return res;
     }

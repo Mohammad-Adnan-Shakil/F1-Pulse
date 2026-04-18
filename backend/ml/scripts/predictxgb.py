@@ -4,15 +4,9 @@ import joblib
 import numpy as np
 import os
 
-# -------------------------------
-# Setup Paths
-# -------------------------------
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 
-# -------------------------------
-# Load Model + Encoders
-# -------------------------------
 try:
     model = joblib.load(os.path.join(MODEL_DIR, "xgb_model.pkl"))
     le_constructor = joblib.load(os.path.join(MODEL_DIR, "le_constructor.pkl"))
@@ -21,21 +15,14 @@ except Exception as e:
     print(json.dumps({"error": f"Model loading failed: {str(e)}"}))
     sys.exit(1)
 
-# -------------------------------
-# Read Input (FIXED)
-# -------------------------------
+
 try:
-    if len(sys.argv) > 1:
-        input_json = json.loads(sys.argv[1])
-    else:
-        input_json = json.loads(sys.stdin.read())
-except Exception:
-    print(json.dumps({"error": "Invalid or missing JSON input"}))
+    input_json = json.loads(sys.stdin.read())
+except Exception as e:
+    print(json.dumps({"error": f"Invalid input: {str(e)}"}))
     sys.exit(1)
 
-# -------------------------------
-# Validate Required Fields
-# -------------------------------
+
 required_fields = [
     "qualifying_position",
     "constructor_id",
@@ -53,23 +40,19 @@ if missing_fields:
     print(json.dumps({"error": f"Missing fields: {missing_fields}"}))
     sys.exit(1)
 
-# -------------------------------
-# Safe Encoding
-# -------------------------------
+
 def safe_encode(encoder, value):
     try:
         return encoder.transform([value])[0]
     except:
         return 0
 
+
 constructor_encoded = safe_encode(le_constructor, input_json["constructor_id"])
 track_encoded = safe_encode(le_track, input_json["track_id"])
 
-# -------------------------------
-# Build Feature Vector
-# -------------------------------
 try:
-    features = np.array([[
+    features = np.array([[ 
         float(input_json["qualifying_position"]),
         float(constructor_encoded),
         float(track_encoded),
@@ -79,24 +62,30 @@ try:
         float(input_json["grid_position"]),
         float(input_json["is_home_race"])
     ]])
-except Exception as e:
-    print(json.dumps({"error": f"Feature conversion error: {str(e)}"}))
-    sys.exit(1)
 
-# -------------------------------
-# Prediction
-# -------------------------------
-try:
-    prediction = model.predict(features)[0]
+    prediction = float(model.predict(features)[0])
+
+    # Confidence (heuristic)
+    variance_proxy = float(np.std(features))
+    confidence = 1 / (1 + variance_proxy)
+    confidence = max(0.0, min(1.0, confidence))
+
+    if confidence > 0.75:
+        confidence_label = "high"
+    elif confidence > 0.5:
+        confidence_label = "medium"
+    else:
+        confidence_label = "low"
+
 except Exception as e:
     print(json.dumps({"error": f"Prediction failed: {str(e)}"}))
     sys.exit(1)
 
-# -------------------------------
-# Output
-# -------------------------------
+
 output = {
-    "predicted_position": round(float(prediction), 2)
+    "predicted_position": round(prediction, 2),
+    "confidence": round(confidence, 3),
+    "confidence_label": confidence_label
 }
 
 print(json.dumps(output))

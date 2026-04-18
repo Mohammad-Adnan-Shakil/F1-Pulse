@@ -3,14 +3,14 @@ import json
 import subprocess
 import os
 
-# Paths
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT_DIR = os.path.join(BASE_DIR, "scripts")
 
 RF_SCRIPT = os.path.join(SCRIPT_DIR, "predict_rf.py")
-XGB_SCRIPT = os.path.join(SCRIPT_DIR, "predictxgb.py")  # adjust name if needed
+XGB_SCRIPT = os.path.join(SCRIPT_DIR, "predictxgb.py")
 
 
+# ✅ FIXED: Use STDIN (not argv)
 def run_script(script_path, input_json):
     try:
         process = subprocess.Popen(
@@ -23,8 +23,11 @@ def run_script(script_path, input_json):
 
         stdout, stderr = process.communicate(json.dumps(input_json))
 
-        if stderr:
+        if process.returncode != 0:
             return {"error": stderr.strip()}
+
+        if not stdout:
+            return {"error": "Empty response from script"}
 
         return json.loads(stdout)
 
@@ -53,18 +56,23 @@ def generate_insight(rf_pred, xgb_pred, avg_last5, std_last5):
 
 def main():
     try:
-        if len(sys.argv) > 1:
-            input_json = json.loads(sys.argv[1])
-        else:
-            input_json = json.loads(sys.stdin.read())
-    except:
-        print(json.dumps({"error": "Invalid input"}))
+        # ✅ FIXED: Read ONLY from STDIN
+        raw_input = sys.stdin.read().strip()
+
+        if not raw_input:
+            print(json.dumps({"error": "No input provided"}))
+            sys.exit(1)
+
+        input_json = json.loads(raw_input)
+
+    except Exception as e:
+        print(json.dumps({"error": f"Invalid input: {str(e)}"}))
         sys.exit(1)
 
-    # 🔥 Call RF (Phase 2)
-    rf_result = run_script(RF_SCRIPT, input_json)
+    # 🔥 DEBUG (optional, remove later)
+    print("INPUT RECEIVED:", input_json, file=sys.stderr)
 
-    # 🔥 Call XGB (Phase 1)
+    rf_result = run_script(RF_SCRIPT, input_json)
     xgb_result = run_script(XGB_SCRIPT, input_json)
 
     if "error" in rf_result or "error" in xgb_result:
@@ -75,27 +83,26 @@ def main():
         }))
         sys.exit(1)
 
-    rf_pred = rf_result.get("predicted_next_position")
-    xgb_pred = xgb_result.get("predicted_position")
+    rf_pred = rf_result["predicted_next_position"]
+    xgb_pred = xgb_result["predicted_position"]
 
-    avg_last5 = input_json.get("avg_last_5")
-    std_last5 = input_json.get("std_last_5")
+    avg_last5 = input_json["avg_last_5"]
+    std_last5 = input_json["std_last_5"]
 
-    # 🔥 Simulation logic
     impact = simulate_impact(rf_pred, avg_last5)
-
-    # 🔥 Final insight
     insight = generate_insight(rf_pred, xgb_pred, avg_last5, std_last5)
 
-    output = {
-        "driver_id": input_json.get("driver_id"),
+    response = {
+        "driver_id": input_json["driver_id"],
         "rf_prediction": rf_pred,
         "xgb_prediction": xgb_pred,
+        "confidence": xgb_result["confidence"],
+        "confidence_label": xgb_result["confidence_label"],
         "simulation_impact": impact,
         "final_insight": insight
     }
 
-    print(json.dumps(output))
+    print(json.dumps(response))
 
 
 if __name__ == "__main__":
