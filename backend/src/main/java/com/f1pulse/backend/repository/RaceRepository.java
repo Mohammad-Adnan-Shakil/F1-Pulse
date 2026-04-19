@@ -7,11 +7,9 @@ import java.util.List;
 
 public interface RaceRepository extends JpaRepository<Race, Long> {
 
-    // For DriverInsightsService
-    List<Race> findTop10ByDriverIdOrderByDateDesc(Long driverId);
+    List<Race> findTop10ByDriverIdAndPositionIsNotNullOrderByDateDesc(Long driverId);
 
-    // For SimulationService (ascending order)
-    List<Race> findByDriverIdOrderByDateAsc(Long driverId);
+    List<Race> findByDriverIdAndPositionIsNotNullOrderByDateAsc(Long driverId);
 
-    
+    List<Race> findBySeasonAndDriverIdIsNullOrderByDateAsc(Integer season);
 }

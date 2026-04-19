@@ -1,6 +1,6 @@
 package com.f1pulse.backend.model;
 
-public class RaceDTO {
+public class RaceResultDTO {
 
     private final Integer round;
     private final String raceName;
@@ -8,14 +8,25 @@ public class RaceDTO {
     private final String location;
     private final String country;
     private final String date;
+    private final String driverCode;
+    private final Integer position;
 
-    public RaceDTO(Integer round, String raceName, String circuitName, String location, String country, String date) {
+    public RaceResultDTO(Integer round,
+                         String raceName,
+                         String circuitName,
+                         String location,
+                         String country,
+                         String date,
+                         String driverCode,
+                         Integer position) {
         this.round = round;
         this.raceName = raceName;
         this.circuitName = circuitName;
         this.location = location;
         this.country = country;
         this.date = date;
+        this.driverCode = driverCode;
+        this.position = position;
     }
 
     public Integer getRound() {
@@ -40,5 +51,13 @@ public class RaceDTO {
 
     public String getDate() {
         return date;
+    }
+
+    public String getDriverCode() {
+        return driverCode;
+    }
+
+    public Integer getPosition() {
+        return position;
     }
 }

@@ -3,7 +3,9 @@ package com.f1pulse.backend.controller;
 import com.f1pulse.backend.model.Driver;
 import com.f1pulse.backend.repository.DriverRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -17,11 +19,10 @@ public class DriverController {
         this.driverRepository = driverRepository;
     }
 
-    // ✅ Get all drivers
     @GetMapping
     public ResponseEntity<?> getAllDrivers() {
         try {
-            List<Driver> drivers = driverRepository.findAll();
+            List<Driver> drivers = driverRepository.findBySeasonOrderByPointsDesc(2026);
             return ResponseEntity.ok(drivers);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Failed to load drivers");

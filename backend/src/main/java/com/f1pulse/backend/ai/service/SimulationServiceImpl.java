@@ -4,11 +4,11 @@ import com.f1pulse.backend.ai.dto.MultiSimulationRequestDTO;
 import com.f1pulse.backend.ai.dto.MultiSimulationResponseDTO;
 import com.f1pulse.backend.ai.dto.SimulationRequestDTO;
 import com.f1pulse.backend.ai.dto.SimulationResponseDTO;
-import com.f1pulse.backend.ai.service.SimulationService;
 import com.f1pulse.backend.ai.util.StatsUtil;
 import com.f1pulse.backend.model.Race;
 import com.f1pulse.backend.repository.RaceRepository;
 import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,11 +24,12 @@ public class SimulationServiceImpl implements SimulationService {
     @Override
     public MultiSimulationResponseDTO simulateMultipleRaces(MultiSimulationRequestDTO request) {
 
-        List<Race> races = raceRepository.findByDriverIdOrderByDateAsc(request.getDriverId());
+        List<Race> races = raceRepository.findByDriverIdAndPositionIsNotNullOrderByDateAsc(request.getDriverId());
+        List<Integer> historicalPositions = races.stream().map(Race::getPosition).toList();
 
-        List<Integer> historicalPositions = races.stream()
-                .map(Race::getPosition)
-                .toList();
+        if (historicalPositions.isEmpty()) {
+            throw new RuntimeException("No completed races found for simulation");
+        }
 
         List<Integer> combined = new ArrayList<>(historicalPositions);
         combined.addAll(request.getSimulatedPositions());
@@ -55,25 +56,41 @@ public class SimulationServiceImpl implements SimulationService {
         return response;
     }
 
+    @Override
+    public SimulationResponseDTO simulate(SimulationRequestDTO request) {
+        List<Race> races = raceRepository.findByDriverIdAndPositionIsNotNullOrderByDateAsc(request.getDriverId());
+        List<Integer> historicalPositions = races.stream().map(Race::getPosition).toList();
+
+        if (historicalPositions.isEmpty()) {
+            throw new RuntimeException("No completed races found for simulation");
+        }
+
+        double oldAverage = StatsUtil.calculateAverage(historicalPositions);
+
+        List<Integer> simulatedPositions = new ArrayList<>(historicalPositions);
+        simulatedPositions.add(request.getNewPosition());
+        double newAverage = StatsUtil.calculateAverage(simulatedPositions);
+
+        return new SimulationResponseDTO(oldAverage, newAverage, calculateImpact(oldAverage, newAverage));
+    }
+
     private String calculateImpact(double oldAvg, double newAvg) {
         double diff = oldAvg - newAvg;
 
-        if (diff > 2) return "STRONG IMPROVEMENT";
-        if (diff > 1) return "MODERATE IMPROVEMENT";
-        return "WEAK IMPROVEMENT";
+        if (diff > 2) return "STRONG_IMPROVEMENT";
+        if (diff > 1) return "MODERATE_IMPROVEMENT";
+        if (diff > 0) return "SLIGHT_IMPROVEMENT";
+        if (diff < -1) return "NEGATIVE_IMPACT";
+        return "MINIMAL_IMPACT";
     }
 
     private String calculateRankingImpact(double oldAvg, double newAvg) {
         double diff = oldAvg - newAvg;
 
         if (diff > 2) return "Likely to gain multiple positions";
-        if (diff > 1) return "Possible position gain";
+        if (diff > 1) return "Likely to gain at least one position";
+        if (diff > 0) return "Potential small gain";
+        if (diff < -1) return "Likely to lose positions";
         return "Minimal impact";
-    }
-
-    @Override
-    public SimulationResponseDTO simulate(SimulationRequestDTO request) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'simulate'");
     }
 }

@@ -1,9 +1,11 @@
 package com.f1pulse.backend.controller;
 
-import com.f1pulse.backend.model.Constructor;
-import com.f1pulse.backend.repository.ConstructorRepository;
+import com.f1pulse.backend.model.Team;
+import com.f1pulse.backend.repository.TeamRepository;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -11,17 +13,16 @@ import java.util.List;
 @RequestMapping("/api/constructors")
 public class ConstructorController {
 
-    private final ConstructorRepository constructorRepository;
+    private final TeamRepository teamRepository;
 
-    public ConstructorController(ConstructorRepository constructorRepository) {
-        this.constructorRepository = constructorRepository;
+    public ConstructorController(TeamRepository teamRepository) {
+        this.teamRepository = teamRepository;
     }
 
-    // ✅ Get all constructors
     @GetMapping
     public ResponseEntity<?> getAllConstructors() {
         try {
-            List<Constructor> constructors = constructorRepository.findAll();
+            List<Team> constructors = teamRepository.findAll();
             return ResponseEntity.ok(constructors);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Failed to load constructors");

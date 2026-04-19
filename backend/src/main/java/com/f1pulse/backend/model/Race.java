@@ -10,23 +10,21 @@ public class Race {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ✅ NO RELATIONSHIP — just store ID
     private Long driverId;
+    private Integer round;
 
     private String raceName;
     private String circuitName;
     private String location;
     private String country;
     private String date;
-    private Integer season = 2026;  // 🆕 Season field
-    private String status = "SCHEDULED";  // 🆕 Race status field
+    private Integer season = 2026;
+    private String status = "SCHEDULED";
 
     private Integer position;
 
-    // ✅ Default constructor (required by JPA)
     public Race() {}
 
-    // ✅ Full constructor
     public Race(Long driverId,
                 String raceName,
                 String circuitName,
@@ -43,16 +41,16 @@ public class Race {
         this.position = position;
     }
 
-    // =====================
-    // GETTERS
-    // =====================
-
     public Long getId() {
         return id;
     }
 
     public Long getDriverId() {
         return driverId;
+    }
+
+    public Integer getRound() {
+        return round;
     }
 
     public String getRaceName() {
@@ -79,19 +77,13 @@ public class Race {
         return position;
     }
 
-    // ✅ Added: raceId getter (alias for frontend compatibility - uses 'id')
     public Long getRaceId() {
         return id;
     }
-    
-    // ✅ Added: name getter (frontend expects 'name', model has 'raceName')
+
     public String getName() {
         return raceName;
     }
-
-    // =====================
-    // SETTERS
-    // =====================
 
     public void setId(Long id) {
         this.id = id;
@@ -99,6 +91,10 @@ public class Race {
 
     public void setDriverId(Long driverId) {
         this.driverId = driverId;
+    }
+
+    public void setRound(Integer round) {
+        this.round = round;
     }
 
     public void setRaceName(String raceName) {

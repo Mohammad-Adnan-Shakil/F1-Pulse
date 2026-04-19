@@ -19,16 +19,16 @@ public class DriverInsightsServiceImpl implements DriverInsightsService {
     @Override
     public DriverInsightsResponseDTO getDriverInsights(Long driverId) {
 
-        List<Race> races = raceRepository.findTop10ByDriverIdOrderByDateDesc(driverId);
+        List<Race> races = raceRepository.findTop10ByDriverIdAndPositionIsNotNullOrderByDateDesc(driverId);
 
         if (races.isEmpty()) {
-            throw new RuntimeException("No race data found for driver");
+            throw new RuntimeException("No completed race data found for driver");
         }
 
         List<Race> recent = races.stream().limit(5).toList();
 
         List<Integer> positions = recent.stream()
-                .map(Race::getPosition) // 🔥 ensure this exists in Race.java
+                .map(Race::getPosition)
                 .toList();
 
         double avg = positions.stream()
@@ -49,7 +49,7 @@ public class DriverInsightsServiceImpl implements DriverInsightsService {
                 .average()
                 .orElse(0);
 
-        double consistencyScore = Math.max(0, 10 - variance);
+        double consistencyScore = Math.max(0, Math.min(10, 10 - variance));
 
         int first = positions.get(0);
         int last = positions.get(positions.size() - 1);

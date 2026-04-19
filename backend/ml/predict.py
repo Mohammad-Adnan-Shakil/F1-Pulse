@@ -1,73 +1,120 @@
 #!/usr/bin/env python3
 """
-Main Prediction Script - Mock Version for Testing
-Returns realistic mock predictions while ML models are being configured
+Race prediction entrypoint used by Spring Boot.
+Loads ML models and returns a normalized response payload.
 """
 
-import sys
 import json
+import sys
 from pathlib import Path
+
+import joblib
+import numpy as np
+import pandas as pd
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / "models"
+
+
+class PredictionError(Exception):
+    pass
+
+
+def load_models():
+    try:
+        rf_model = joblib.load(MODEL_DIR / "rf_model.pkl")
+        xgb_model = joblib.load(MODEL_DIR / "xgb_model.pkl")
+        le_driver = joblib.load(MODEL_DIR / "le_driver.pkl")
+        return rf_model, xgb_model, le_driver
+    except Exception as exc:
+        raise PredictionError(f"Model loading failed: {exc}") from exc
+
+
+def safe_scale(value, fallback=0.0):
+    try:
+        return float(value)
+    except Exception:
+        return float(fallback)
+
+
+def encode_driver(le_driver, value=0):
+    try:
+        return le_driver.transform([value])[0]
+    except Exception:
+        return 0
+
+
+def clamp(value, low, high):
+    return max(low, min(high, value))
+
 
 def main():
     try:
-        # Read JSON from STDIN
         raw_input = sys.stdin.read().strip()
-        
         if not raw_input:
-            print(json.dumps({"error": "No input provided"}))
-            sys.exit(1)
-        
-        input_data = json.loads(raw_input)
-        
-        # Extract input fields
-        grid_position = input_data.get("gridPosition", 10)
-        driver_form = input_data.get("driverForm", 7)
-        team_performance = input_data.get("teamPerformance", 6)
-        track_affinity = input_data.get("trackAffinity", 5)
-        
-        # 🧪 MOCK PREDICTION LOGIC (for testing)
-        # Calculate predicted position based on inputs
-        base_position = grid_position
-        
-        # Adjust based on driver form (better form = better position)
-        position_adjustment = (10 - driver_form) * 0.3
-        
-        # Adjust based on team performance (better team = better position)
-        position_adjustment -= (team_performance - 5) * 0.4
-        
-        # Adjust based on track affinity (better affinity = better position)
-        position_adjustment -= (track_affinity - 5) * 0.2
-        
-        predicted_position = base_position + position_adjustment
-        predicted_position = max(1, min(20, round(predicted_position, 1)))
-        
-        # Calculate confidence (higher agreement = higher confidence)
-        model_agreement = 0.85 + (team_performance / 50)
-        confidence = min(0.95, max(0.6, model_agreement))
-        confidence = round(confidence, 2)
-        
-        # Return response matching expected format
-        response = {
-            "predictedPosition": predicted_position,
-            "confidence": confidence,
-            "rf_prediction": round(predicted_position - 0.5, 1),
-            "xgb_prediction": round(predicted_position + 0.5, 1),
-            "model_agreement": round(0.92, 2)
+            raise PredictionError("No input provided")
+
+        payload = json.loads(raw_input)
+
+        grid_position = clamp(safe_scale(payload.get("gridPosition"), 10), 1, 20)
+        driver_form = clamp(safe_scale(payload.get("driverForm"), 5), 0, 10)
+        team_performance = clamp(safe_scale(payload.get("teamPerformance"), 5), 0, 10)
+        track_affinity = clamp(safe_scale(payload.get("trackAffinity"), 5), 0, 10)
+
+        rf_model, xgb_model, le_driver = load_models()
+
+        recent_avg_last_5 = clamp(20.0 - (driver_form * 1.5), 1, 20)
+        recent_std_last_5 = max(0.2, (10.0 - driver_form) / 3.5)
+        avg_last_10 = clamp((recent_avg_last_5 + grid_position) / 2.0, 1, 20)
+        std_last_10 = max(recent_std_last_5, abs(grid_position - recent_avg_last_5) / 4.0)
+
+        rf_features = pd.DataFrame([{
+            "driver_id": encode_driver(le_driver, 0),
+            "avg_last_5": recent_avg_last_5,
+            "std_last_5": recent_std_last_5,
+            "avg_last_10": avg_last_10,
+            "std_last_10": std_last_10,
+            "last_race_position": grid_position,
+        }])
+
+        xgb_features = np.array([[
+            grid_position,
+            0.0,
+            0.0,
+            2026.0,
+            recent_avg_last_5,
+            recent_std_last_5,
+            grid_position,
+            0.0,
+        ]])
+
+        rf_prediction = float(rf_model.predict(rf_features)[0])
+        xgb_prediction = float(xgb_model.predict(xgb_features)[0])
+        blended = clamp((rf_prediction + xgb_prediction) / 2.0, 1, 20)
+
+        disagreement = abs(rf_prediction - xgb_prediction)
+        input_quality = (driver_form + team_performance + track_affinity) / 30.0
+        confidence = clamp((1.0 - disagreement / 20.0) * 0.7 + input_quality * 0.3, 0.2, 0.95)
+
+        output = {
+            "predictedPosition": round(blended, 2),
+            "confidence": round(confidence, 3),
+            "rf_prediction": round(rf_prediction, 2),
+            "xgb_prediction": round(xgb_prediction, 2),
+            "model_agreement": round(1.0 - clamp(disagreement / 20.0, 0, 1), 3),
         }
-        
-        print(json.dumps(response))
-        
-    except json.JSONDecodeError as e:
-        print(json.dumps({"error": f"Invalid JSON input: {str(e)}"}))
+
+        print(json.dumps(output))
+
+    except PredictionError as exc:
+        print(json.dumps({"error": str(exc)}))
         sys.exit(1)
-    except Exception as e:
-        print(json.dumps({"error": f"Prediction failed: {str(e)}"}))
+    except json.JSONDecodeError as exc:
+        print(json.dumps({"error": f"Invalid JSON input: {exc}"}))
         sys.exit(1)
-
-
-if __name__ == "__main__":
-    main()
-
+    except Exception as exc:
+        print(json.dumps({"error": f"Prediction failed: {exc}"}))
+        sys.exit(1)
 
 
 if __name__ == "__main__":

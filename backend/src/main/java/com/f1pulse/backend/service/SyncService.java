@@ -1,31 +1,45 @@
 package com.f1pulse.backend.service;
 
-import com.f1pulse.backend.model.*;
-import com.f1pulse.backend.repository.*;
-import org.springframework.stereotype.Service;
+import com.f1pulse.backend.model.Driver;
+import com.f1pulse.backend.model.DriverDTO;
+import com.f1pulse.backend.model.Race;
+import com.f1pulse.backend.model.RaceDTO;
+import com.f1pulse.backend.model.RaceResultDTO;
+import com.f1pulse.backend.model.SyncMeta;
+import com.f1pulse.backend.model.Team;
+import com.f1pulse.backend.model.TeamDTO;
+import com.f1pulse.backend.repository.DriverRepository;
+import com.f1pulse.backend.repository.RaceRepository;
+import com.f1pulse.backend.repository.SyncMetaRepository;
+import com.f1pulse.backend.repository.TeamRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SyncService {
+
+    private static final Logger log = LoggerFactory.getLogger(SyncService.class);
+    private static final int CURRENT_SEASON = 2026;
+    private static final long CACHE_DURATION = 60 * 60 * 1000L;
 
     private final DriverRepository driverRepository;
     private final TeamRepository teamRepository;
     private final RaceRepository raceRepository;
     private final SyncMetaRepository syncMetaRepository;
     private final F1ApiClient f1ApiClient;
-    private static final Logger log = LoggerFactory.getLogger(SyncService.class);
-
-    private final long CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
     public SyncService(DriverRepository driverRepository,
-            TeamRepository teamRepository,
-            RaceRepository raceRepository,
-            SyncMetaRepository syncMetaRepository,
-            F1ApiClient f1ApiClient) {
+                       TeamRepository teamRepository,
+                       RaceRepository raceRepository,
+                       SyncMetaRepository syncMetaRepository,
+                       F1ApiClient f1ApiClient) {
 
         this.driverRepository = driverRepository;
         this.teamRepository = teamRepository;
@@ -34,12 +48,9 @@ public class SyncService {
         this.f1ApiClient = f1ApiClient;
     }
 
-    // ================= COMMON METHOD =================
-
     private boolean shouldSync(String key) {
         SyncMeta meta = syncMetaRepository.findById(key).orElse(null);
         long currentTime = System.currentTimeMillis();
-
         return meta == null || (currentTime - meta.getLastSyncTime()) >= CACHE_DURATION;
     }
 
@@ -47,48 +58,45 @@ public class SyncService {
         syncMetaRepository.save(new SyncMeta(key, System.currentTimeMillis()));
     }
 
-    // ================= DRIVERS =================
-
     public List<Driver> syncDrivers() {
         try {
             String key = "drivers";
-
             if (!shouldSync(key)) {
                 log.info("Using cached drivers data");
-                return driverRepository.findAll();
+                return driverRepository.findBySeasonOrderByPointsDesc(CURRENT_SEASON);
             }
 
             log.info("Syncing fresh drivers data");
-
             List<DriverDTO> dtos = f1ApiClient.fetchDrivers();
+            Map<String, Team> teamsByName = teamRepository.findAll().stream()
+                    .collect(Collectors.toMap(Team::getName, t -> t, (a, b) -> a));
+
             List<Driver> drivers = new ArrayList<>();
-
             for (DriverDTO dto : dtos) {
-
-                Driver existing = driverRepository.findByCode(dto.getCode());
-
-                if (existing != null) {
-                    existing.setName(dto.getName());
-                    existing.setNationality(dto.getNationality());
-                    existing.setTeam(dto.getTeam());  // 🆕 Set team
-                    drivers.add(existing);
-                } else {
-                    Driver newDriver = new Driver(
-                            dto.getCode(),
-                            dto.getName(),
-                            dto.getNationality()
-                    );
-                    newDriver.setTeam(dto.getTeam());  // 🆕 Set team
-                    drivers.add(newDriver);
+                Driver driver = driverRepository.findByCode(dto.getCode());
+                if (driver == null) {
+                    driver = new Driver(dto.getCode(), dto.getName(), dto.getNationality());
                 }
+
+                driver.setName(dto.getName());
+                driver.setNationality(dto.getNationality());
+                driver.setTeam(dto.getTeam());
+                driver.setPoints(dto.getPoints() == null ? 0.0 : dto.getPoints());
+                driver.setSeason(CURRENT_SEASON);
+
+                Team mappedTeam = teamsByName.get(dto.getTeam());
+                if (mappedTeam != null) {
+                    driver.setTeamId(mappedTeam.getId());
+                }
+
+                drivers.add(driver);
             }
 
             updateSyncTime(key);
-
             return driverRepository.saveAll(drivers);
 
         } catch (Exception e) {
-            log.error("Error syncing drivers: {}", e.getMessage());
+            log.error("Error syncing drivers", e);
             throw e;
         }
     }
@@ -96,96 +104,107 @@ public class SyncService {
     public List<Team> syncTeams() {
         try {
             String key = "teams";
-
             if (!shouldSync(key)) {
-                System.out.println("Using cached teams data");
+                log.info("Using cached teams data");
                 return teamRepository.findAll();
             }
 
-            System.out.println("Syncing fresh teams data");
-
+            log.info("Syncing fresh teams data");
             List<TeamDTO> dtos = f1ApiClient.fetchTeams();
             List<Team> teams = new ArrayList<>();
 
             for (TeamDTO dto : dtos) {
-
-                Team existing = teamRepository.findByName(dto.getName());
-
-                if (existing != null) {
-                    existing.setNationality(dto.getNationality());
-                    teams.add(existing);
+                Team team = teamRepository.findByName(dto.getName());
+                if (team == null) {
+                    team = new Team(dto.getName(), dto.getNationality());
                 } else {
-                    teams.add(new Team(
-                            dto.getName(),
-                            dto.getNationality()));
+                    team.setNationality(dto.getNationality());
                 }
+                teams.add(team);
             }
 
             updateSyncTime(key);
-
             return teamRepository.saveAll(teams);
+
         } catch (Exception e) {
-            log.error("Error syncing drivers: {}", e.getMessage());
+            log.error("Error syncing teams", e);
             throw e;
         }
     }
 
-    // ================= RACES =================
-
     public List<Race> syncRaces() {
         try {
-
             String key = "races";
-
             if (!shouldSync(key)) {
-                System.out.println("Using cached races data");
-                return raceRepository.findAll();
+                log.info("Using cached races data");
+                return raceRepository.findBySeasonAndDriverIdIsNullOrderByDateAsc(CURRENT_SEASON);
             }
 
-            System.out.println("Syncing fresh races data");
+            log.info("Syncing fresh races data");
+            List<RaceDTO> calendar = f1ApiClient.fetchRaces();
+            List<RaceResultDTO> results = f1ApiClient.fetchRaceResults();
 
-            List<RaceDTO> dtos = f1ApiClient.fetchRaces();
-            List<Race> races = new ArrayList<>();
+            Map<Integer, List<RaceResultDTO>> resultsByRound = results.stream()
+                    .collect(Collectors.groupingBy(RaceResultDTO::getRound));
 
-            for (RaceDTO dto : dtos) {
-
-                Driver driver = driverRepository.findAll().get(0); // temporary mapping
-
-                Long driverId = 47L; // TEMP (must exist)
-
-                Race race = new Race(
-                        driverId,
-                        dto.getRaceName(),
-                        dto.getCircuitName(),
-                        dto.getLocation(),
-                        dto.getCountry(),
-                        dto.getDate(),
-                        (int) (Math.random() * 20 + 1) // fake position (1–20)
-                );
-
-                // 🆕 Set race status based on date
-                // Current date: 2026-04-19
-                try {
-                    java.time.LocalDate raceDate = java.time.LocalDate.parse(dto.getDate());
-                    java.time.LocalDate currentDate = java.time.LocalDate.of(2026, 4, 19);
-                    
-                    if (raceDate.isBefore(currentDate)) {
-                        race.setStatus("COMPLETED");
-                    } else {
-                        race.setStatus("SCHEDULED");
-                    }
-                } catch (Exception e) {
-                    race.setStatus("SCHEDULED");
+            Map<String, Driver> driversByCode = new HashMap<>();
+            for (Driver driver : driverRepository.findAll()) {
+                if (driver.getCode() != null) {
+                    driversByCode.put(driver.getCode().toUpperCase(), driver);
                 }
-
-                races.add(race);
             }
 
-            updateSyncTime(key);
+            List<Race> rowsToPersist = new ArrayList<>();
 
-            return raceRepository.saveAll(races);
+            for (RaceDTO raceDto : calendar) {
+                List<RaceResultDTO> completedRows = resultsByRound.getOrDefault(raceDto.getRound(), List.of());
+                boolean completed = !completedRows.isEmpty();
+
+                Race scheduleRow = new Race(
+                        null,
+                        raceDto.getRaceName(),
+                        raceDto.getCircuitName(),
+                        raceDto.getLocation(),
+                        raceDto.getCountry(),
+                        raceDto.getDate(),
+                        null
+                );
+                scheduleRow.setSeason(CURRENT_SEASON);
+                scheduleRow.setRound(raceDto.getRound());
+                scheduleRow.setStatus(completed ? "COMPLETED" : "SCHEDULED");
+                rowsToPersist.add(scheduleRow);
+
+                if (completed) {
+                    for (RaceResultDTO result : completedRows) {
+                        Driver driver = driversByCode.get(result.getDriverCode());
+                        if (driver == null) {
+                            continue;
+                        }
+
+                        Race resultRow = new Race(
+                                driver.getId(),
+                                result.getRaceName(),
+                                result.getCircuitName(),
+                                result.getLocation(),
+                                result.getCountry(),
+                                result.getDate(),
+                                result.getPosition()
+                        );
+                        resultRow.setSeason(CURRENT_SEASON);
+                        resultRow.setRound(result.getRound());
+                        resultRow.setStatus("COMPLETED");
+                        rowsToPersist.add(resultRow);
+                    }
+                }
+            }
+
+            raceRepository.deleteAllInBatch();
+            List<Race> saved = raceRepository.saveAll(rowsToPersist);
+            updateSyncTime(key);
+            return saved;
+
         } catch (Exception e) {
-            log.error("Error syncing drivers: {}", e.getMessage());
+            log.error("Error syncing races", e);
             throw e;
         }
     }

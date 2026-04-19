@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
 
         if (res.ok) {
           const data = await res.json();
-          setUser(data);
+          setUser(data?.data || data);
         } else {
           // ❌ DO NOT logout here
           console.warn("User fetch failed, but keeping token");

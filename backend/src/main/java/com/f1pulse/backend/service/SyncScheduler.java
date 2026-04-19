@@ -12,22 +12,10 @@ public class SyncScheduler {
         this.syncService = syncService;
     }
 
-    // Run every 1 hour
     @Scheduled(fixedDelayString = "3600000")
-    public void syncDriversAutomatically() {
-        System.out.println("Auto-syncing drivers...");
-        syncService.syncDrivers();
-    }
-
-    @Scheduled(fixedDelayString = "3600000")
-    public void syncTeamsAutomatically() {
-        System.out.println("Auto-syncing teams...");
+    public void syncAllAutomatically() {
         syncService.syncTeams();
-    }
-
-    @Scheduled(fixedDelayString = "3600000")
-    public void syncRacesAutomatically() {
-        System.out.println("Auto-syncing races...");
+        syncService.syncDrivers();
         syncService.syncRaces();
     }
 }

@@ -1,18 +1,20 @@
 package com.f1pulse.backend.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.f1pulse.backend.dto.DriverIntelligenceResponse;
-import com.f1pulse.backend.model.Race;
 import com.f1pulse.backend.model.Driver;
+import com.f1pulse.backend.model.Race;
 import com.f1pulse.backend.model.Team;
-import com.f1pulse.backend.repository.RaceRepository;
 import com.f1pulse.backend.repository.DriverRepository;
+import com.f1pulse.backend.repository.RaceRepository;
 import com.f1pulse.backend.repository.TeamRepository;
 import com.f1pulse.backend.util.PythonExecutor;
 import com.f1pulse.backend.util.StatsUtil;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -21,135 +23,95 @@ public class AIService {
     private final RaceRepository raceRepository;
     private final DriverRepository driverRepository;
     private final TeamRepository teamRepository;
+    private final PythonExecutor pythonExecutor;
 
     public AIService(RaceRepository raceRepository,
                      DriverRepository driverRepository,
-                     TeamRepository teamRepository) {
+                     TeamRepository teamRepository,
+                     PythonExecutor pythonExecutor) {
         this.raceRepository = raceRepository;
         this.driverRepository = driverRepository;
         this.teamRepository = teamRepository;
+        this.pythonExecutor = pythonExecutor;
     }
 
     public DriverIntelligenceResponse getDriverIntelligence(Long driverId) {
+        List<Race> races = raceRepository.findTop10ByDriverIdAndPositionIsNotNullOrderByDateDesc(driverId);
 
-        // 🔹 1. Fetch races
-        List<Race> races = raceRepository.findTop10ByDriverIdOrderByDateDesc(driverId);
-
-        if (races == null || races.isEmpty()) {
-            throw new RuntimeException("No race data found for driver: " + driverId);
+        if (races.isEmpty()) {
+            throw new RuntimeException("No completed race data found for driver: " + driverId);
         }
 
-        // 🔹 2. Stats
         double avgLast5 = StatsUtil.calculateAverage(races, 5);
         double stdLast5 = StatsUtil.calculateStdDev(races, 5);
-
         double avgLast10 = StatsUtil.calculateAverage(races, 10);
         double stdLast10 = StatsUtil.calculateStdDev(races, 10);
 
-        Race latestRace = races.get(0);
+        Race latestRace = races.getFirst();
+        int qualifyingPosition = latestRace.getPosition();
         double lastRacePosition = latestRace.getPosition();
 
-        // 🔹 3. REAL DATA EXTRACTION
+        String trackId = normalizeToken(latestRace.getCircuitName());
+        String constructorId = resolveConstructorId(driverId);
 
-        // Track
-        String trackId = latestRace.getCircuitName() != null
-                ? latestRace.getCircuitName().toLowerCase().replace(" ", "_")
-                : "unknown";
+        Map<String, Object> modelInput = new LinkedHashMap<>();
+        modelInput.put("driver_id", driverId);
+        modelInput.put("avg_last_5", round2(avgLast5));
+        modelInput.put("std_last_5", round2(stdLast5));
+        modelInput.put("avg_last_10", round2(avgLast10));
+        modelInput.put("std_last_10", round2(stdLast10));
+        modelInput.put("last_race_position", round2(lastRacePosition));
+        modelInput.put("qualifying_position", qualifyingPosition);
+        modelInput.put("constructor_id", constructorId);
+        modelInput.put("track_id", trackId);
+        modelInput.put("season_year", 2026);
+        modelInput.put("recent_avg_position_last_5", round2(avgLast5));
+        modelInput.put("recent_std_last_5", round2(stdLast5));
+        modelInput.put("grid_position", qualifyingPosition);
+        modelInput.put("is_home_race", 0);
 
-        // Qualifying fallback
-        int qualifyingPosition = latestRace.getPosition();
+        JsonNode result = pythonExecutor.runScript("ml/scripts/ai_orchestrator.py", modelInput);
 
-        // Constructor (SAFE + DB BASED)
-        String constructorId = "unknown";
+        DriverIntelligenceResponse response = new DriverIntelligenceResponse();
+        response.setDriverId(driverId);
+        response.setRfPrediction(result.path("rf_prediction").asDouble());
+        response.setXgbPrediction(result.path("xgb_prediction").asDouble());
+        response.setSimulationImpact(result.path("simulation_impact").asText("neutral"));
+        response.setFinalInsight(result.path("final_insight").asText("Model output generated."));
+        response.setConfidence(result.path("confidence").asDouble());
+        response.setConfidenceLabel(result.path("confidence_label").asText("unknown"));
+        return response;
+    }
 
-        try {
-            Optional<Driver> driverOpt = driverRepository.findById(driverId);
+    private String resolveConstructorId(Long driverId) {
+        Optional<Driver> driverOpt = driverRepository.findById(driverId);
+        if (driverOpt.isEmpty()) {
+            return "unknown";
+        }
 
-            if (driverOpt.isPresent()) {
-                Driver driver = driverOpt.get();
+        Driver driver = driverOpt.get();
+        if (driver.getTeam() != null && !driver.getTeam().isBlank()) {
+            return normalizeToken(driver.getTeam());
+        }
 
-                if (driver.getTeamId() != null) {
-                    Optional<Team> teamOpt = teamRepository.findById(driver.getTeamId());
-
-                    if (teamOpt.isPresent() && teamOpt.get().getName() != null) {
-                        constructorId = teamOpt.get()
-                                .getName()
-                                .toLowerCase()
-                                .replace(" ", "_");
-                    }
-                }
+        if (driver.getTeamId() != null) {
+            Optional<Team> teamOpt = teamRepository.findById(driver.getTeamId());
+            if (teamOpt.isPresent()) {
+                return normalizeToken(teamOpt.get().getName());
             }
-        } catch (Exception e) {
-            System.out.println("Constructor mapping fallback used");
         }
 
-        // 🔥 IMPORTANT DEBUG (DON'T REMOVE UNTIL STABLE)
-        System.out.println("Track: " + trackId);
-        System.out.println("Constructor: " + constructorId);
+        return "unknown";
+    }
 
-        // 🔹 4. Build JSON (CLEAN STRING)
-        String jsonInput = String.format(
-                "{"
-                        + "\"driver_id\":%d,"
-                        + "\"avg_last_5\":%.2f,"
-                        + "\"std_last_5\":%.2f,"
-                        + "\"avg_last_10\":%.2f,"
-                        + "\"std_last_10\":%.2f,"
-                        + "\"last_race_position\":%.2f,"
-                        + "\"qualifying_position\":%d,"
-                        + "\"constructor_id\":\"%s\","
-                        + "\"track_id\":\"%s\","
-                        + "\"season_year\":2026,"
-                        + "\"recent_avg_position_last_5\":%.2f,"
-                        + "\"recent_std_last_5\":%.2f,"
-                        + "\"grid_position\":%d,"
-                        + "\"is_home_race\":0"
-                        + "}",
-                driverId,
-                avgLast5,
-                stdLast5,
-                avgLast10,
-                stdLast10,
-                lastRacePosition,
-                qualifyingPosition,
-                constructorId,
-                trackId,
-                avgLast5,
-                stdLast5,
-                qualifyingPosition
-        );
-
-        // 🔥 DEBUG (THIS IS CRITICAL)
-        System.out.println("JSON SENT TO PYTHON: " + jsonInput);
-
-        // 🔹 5. Call Python
-        String scriptPath = "ml/scripts/ai_orchestrator.py";
-        JsonNode result = PythonExecutor.runScript(scriptPath, jsonInput);
-
-        System.out.println("AI Orchestrator Output: " + result);
-
-        // 🔥 ERROR HANDLING
-        if (result == null) {
-            throw new RuntimeException("AI Orchestrator returned null response");
+    private static String normalizeToken(String value) {
+        if (value == null || value.isBlank()) {
+            return "unknown";
         }
+        return value.toLowerCase().replace(" ", "_").replace('-', '_');
+    }
 
-        if (result.has("error")) {
-            throw new RuntimeException("AI Orchestrator error: " + result.get("error").asText());
-        }
-
-        // 🔹 6. Map response
-        DriverIntelligenceResponse res = new DriverIntelligenceResponse();
-        res.setDriverId(driverId);
-
-        res.setRfPrediction(result.path("rf_prediction").asDouble());
-        res.setXgbPrediction(result.path("xgb_prediction").asDouble());
-        res.setSimulationImpact(result.path("simulation_impact").asText());
-        res.setFinalInsight(result.path("final_insight").asText());
-
-        // ✅ NEW
-        res.setConfidence(result.path("confidence").asDouble());
-        res.setConfidenceLabel(result.path("confidence_label").asText());
-
-        return res;
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

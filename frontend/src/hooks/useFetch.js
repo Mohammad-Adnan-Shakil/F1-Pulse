@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import api from "../utils/axios";
 
-/**
- * Custom hook for fetching data from APIs
- * @param {string} endpoint - API endpoint
- * @param {array} dependencies - Re-fetch when dependencies change
- * @returns {object} { data, loading, error, refetch }
- */
+const unwrapApiData = (payload) => {
+  if (payload && typeof payload === "object" && "success" in payload && "data" in payload) {
+    if (!payload.success) {
+      throw new Error(payload.message || "Request failed");
+    }
+    return payload.data;
+  }
+  return payload;
+};
+
 export const useFetch = (endpoint, dependencies = []) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,9 +21,10 @@ export const useFetch = (endpoint, dependencies = []) => {
       setLoading(true);
       setError(null);
       const response = await api.get(endpoint);
-      setData(response.data);
+      setData(unwrapApiData(response.data));
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to fetch data");
+      const errorMsg = err.response?.data?.message || err.message || "Failed to fetch data";
+      setError(errorMsg);
       console.error(`Error fetching ${endpoint}:`, err);
     } finally {
       setLoading(false);
@@ -33,11 +38,6 @@ export const useFetch = (endpoint, dependencies = []) => {
   return { data, loading, error, refetch: fetchData };
 };
 
-/**
- * Custom hook for POST requests
- * @param {string} endpoint - API endpoint
- * @returns {object} { execute, loading, error, data }
- */
 export const usePost = (endpoint) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -48,10 +48,15 @@ export const usePost = (endpoint) => {
       setLoading(true);
       setError(null);
       const response = await api.post(endpoint, payload);
-      setData(response.data);
-      return response.data;
+      const normalized = unwrapApiData(response.data);
+      setData(normalized);
+      return normalized;
     } catch (err) {
-      const errorMsg = err.response?.data?.message || "Request failed";
+      const errorMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        "Request failed";
       setError(errorMsg);
       throw new Error(errorMsg);
     } finally {
