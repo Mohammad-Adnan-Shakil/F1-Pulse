@@ -1,150 +1,121 @@
-import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Card, Input, SkeletonTable } from "../components/common";
-import { useFetch } from "../hooks/useFetch";
+﻿import { useMemo, useState } from "react";
+import { CalendarClock, CheckCircle2, Clock3, Flag, MapPin } from "lucide-react";
+import { Card, EmptyState, ErrorState, LoadingState } from "../components/common";
+import useFetch from "../hooks/useFetch";
+import usePageTitle from "../hooks/usePageTitle";
+import { formatRaceDate } from "../utils/formatters";
 
 const Races = () => {
-  const { data, loading, error } = useFetch("/races");
+  usePageTitle("Races");
+
+  const { data, loading, error, refetch } = useFetch("/races");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
 
-  const races = useMemo(() => {
-    const source = data || [];
-    const unique = new Map();
+  const races = (data || []).slice().sort((a, b) => (a.round ?? 999) - (b.round ?? 999));
+  const completed = races.filter((race) => race.status === "COMPLETED");
+  const scheduled = races.filter((race) => race.status !== "COMPLETED");
 
-    for (const race of source) {
-      const key =
-        race?.round != null
-          ? `round-${race.round}`
-          : `fallback-${race?.raceName || "race"}-${race?.date || "date"}`;
+  const nextRaceId = scheduled.length ? scheduled[0].raceId : null;
 
-      if (!unique.has(key)) {
-        unique.set(key, race);
-      }
-    }
-
-    return Array.from(unique.values()).sort((a, b) => {
-      const aRound = a?.round ?? Number.MAX_SAFE_INTEGER;
-      const bRound = b?.round ?? Number.MAX_SAFE_INTEGER;
-      if (aRound !== bRound) return aRound - bRound;
-      return String(a?.date || "").localeCompare(String(b?.date || ""));
-    });
-  }, [data]);
-
-  const filteredRaces = useMemo(() => {
+  const filtered = useMemo(() => {
+    const token = search.toLowerCase();
     return races.filter((race) => {
-      const token = search.toLowerCase();
-      const matchesSearch =
+      return (
         race.raceName?.toLowerCase().includes(token) ||
-        race.location?.toLowerCase().includes(token) ||
-        race.country?.toLowerCase().includes(token);
-
-      const status = (race.status || "SCHEDULED").toUpperCase();
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "completed" && status === "COMPLETED") ||
-        (statusFilter === "upcoming" && status !== "COMPLETED");
-
-      return matchesSearch && matchesStatus;
+        race.circuitName?.toLowerCase().includes(token) ||
+        race.location?.toLowerCase().includes(token)
+      );
     });
-  }, [races, search, statusFilter]);
+  }, [races, search]);
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-white">Race Calendar</h1>
-        <SkeletonTable rows={8} cols={5} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <p className="text-red-400 font-semibold">Unable to load race calendar.</p>
-        <p className="text-gray-400 mt-2 text-sm">{error}</p>
-      </Card>
-    );
-  }
-
-  const completedCount = races.filter((race) => race.status === "COMPLETED").length;
+  if (loading) return <LoadingState message="Loading race calendar..." />;
+  if (error) return <ErrorState message={error} onRetry={refetch} />;
+  if (!races.length) return <EmptyState title="No races found" description="No race calendar rows available." />;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white">2026 Race Calendar</h1>
-        <p className="text-gray-400 mt-2">
-          {completedCount} completed, {races.length - completedCount} scheduled
-        </p>
-      </div>
+      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="section-label">Season Calendar</p>
+            <div className="mt-2 flex items-center gap-3">
+              <CalendarClock className="h-6 w-6 text-accentRed" />
+              <h1 className="text-3xl font-bold tracking-tight">2026 RACE CALENDAR</h1>
+            </div>
+            <p className="mt-2 text-sm text-whiteMuted">{completed.length} completed · {scheduled.length} scheduled</p>
+          </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <Input
-            placeholder="Search race, location, country"
+          <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search race, circuit or location"
+            className="surface-input w-full lg:w-[320px]"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-red-500"
-        >
-          <option value="all">All races</option>
-          <option value="completed">Completed</option>
-          <option value="upcoming">Upcoming</option>
-        </select>
-      </div>
+      </section>
 
-      {filteredRaces.length === 0 ? (
-        <Card>
-          <p className="text-gray-300">No races match your filters.</p>
-        </Card>
+      {filtered.length === 0 ? (
+        <EmptyState title="No matching races" description="Try different keywords." />
       ) : (
-        <div className="space-y-4">
-          {filteredRaces.map((race, idx) => (
-            <motion.div
-              key={race.raceId}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.03 }}
-            >
-              <Card hover>
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-center">
-                  <div className="lg:col-span-2">
-                    <p className="text-xs uppercase text-gray-400">Round {race.round}</p>
-                    <h3 className="text-xl font-bold text-white mt-1">{race.raceName}</h3>
-                    <p className="text-gray-400 mt-1">{race.circuitName}</p>
+        <section className="space-y-3">
+          {filtered.map((race, index) => {
+            const isCompleted = race.status === "COMPLETED";
+            const isNext = race.raceId === nextRaceId;
+
+            return (
+              <Card
+                key={race.raceId || `${race.round}-${index}`}
+                className={`relative ${isNext ? "border-accentRed/40 bg-accentRed/5" : ""}`}
+                delay={index * 0.05}
+              >
+                {isNext ? <div className="absolute inset-y-3 left-0 w-1 rounded-r bg-accentRed" /> : null}
+
+                <div className="grid grid-cols-[64px_1fr_auto] items-center gap-4">
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border text-sm font-semibold ${
+                      isCompleted
+                        ? "border-accentRed bg-accentRed text-white"
+                        : "border-borderSoft bg-bgElevated text-whiteMuted"
+                    }`}
+                  >
+                    {race.round}
                   </div>
+
                   <div>
-                    <p className="text-xs uppercase text-gray-400">Location</p>
-                    <p className="text-white mt-1">{race.location}, {race.country}</p>
+                    <h2 className="text-xl font-semibold text-whitePrimary">{race.raceName}</h2>
+                    <p className="text-sm text-whiteMuted">{race.circuitName}</p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-whiteMuted">
+                      <MapPin className="h-3.5 w-3.5" /> {race.location}, {race.country}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase text-gray-400">Date</p>
-                    <p className="text-white mt-1">{race.date}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase text-gray-400">Status</p>
-                    <span
-                      className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                        race.status === "COMPLETED"
-                          ? "bg-green-500/20 text-green-300"
-                          : "bg-yellow-500/20 text-yellow-300"
-                      }`}
-                    >
-                      {race.status}
-                    </span>
+
+                  <div className="text-right">
+                    <p className="text-sm text-whiteMuted">{formatRaceDate(race.date)}</p>
+                    <div className="mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold">
+                      {isNext ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-accentRed/20 px-2 py-1 text-accentRed">
+                          <span className="h-2 w-2 animate-pulse rounded-full bg-accentRed" /> NEXT
+                        </span>
+                      ) : isCompleted ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-successGreen/20 px-2 py-1 text-successGreen">
+                          <CheckCircle2 className="h-3.5 w-3.5" /> COMPLETED
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-1 text-whiteMuted">
+                          <Clock3 className="h-3.5 w-3.5" /> UPCOMING
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </Card>
-            </motion.div>
-          ))}
-        </div>
+            );
+          })}
+        </section>
       )}
     </div>
   );
 };
 
 export default Races;
+

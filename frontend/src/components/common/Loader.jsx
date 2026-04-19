@@ -1,36 +1,29 @@
-/**
- * Reusable Loader/Spinner Component
- */
-export const Loader = ({ size = "md", message = "Loading..." }) => {
+﻿import { LoaderCircle } from "lucide-react";
+
+export const Loader = ({ size = "md", message = "Loading data..." }) => {
   const sizes = {
-    sm: "w-4 h-4",
-    md: "w-8 h-8",
-    lg: "w-12 h-12",
+    sm: "h-4 w-4",
+    md: "h-7 w-7",
+    lg: "h-10 w-10",
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3">
-      <div
-        className={`
-          ${sizes[size]}
-          border-4 border-gray-700 border-t-red-500
-          rounded-full animate-spin
-        `}
-      ></div>
-      {message && <p className="text-gray-400 text-sm">{message}</p>}
+    <div className="flex flex-col items-center justify-center gap-3 py-8">
+      <LoaderCircle className={`${sizes[size]} animate-spin text-accentRed`} />
+      {message ? <p className="text-sm text-whiteMuted">{message}</p> : null}
     </div>
   );
 };
 
-/**
- * Full Page Loader
- */
 export const FullPageLoader = ({ message = "Loading..." }) => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
-      <Loader size="lg" message={message} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="f1-card min-w-[260px]">
+        <Loader size="lg" message={message} />
+      </div>
     </div>
   );
 };
 
 export default Loader;
+

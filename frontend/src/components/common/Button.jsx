@@ -1,7 +1,4 @@
-/**
- * Reusable Button Component
- */
-export const Button = ({
+﻿export const Button = ({
   children,
   onClick,
   variant = "primary",
@@ -11,16 +8,16 @@ export const Button = ({
   ...props
 }) => {
   const variants = {
-    primary: "bg-red-500 hover:bg-red-600 text-white",
-    secondary: "bg-gray-700 hover:bg-gray-600 text-white border border-gray-600",
-    danger: "bg-red-700 hover:bg-red-800 text-white",
-    ghost: "bg-transparent border border-gray-700 text-white hover:bg-gray-800",
+    primary: "bg-accentRed text-whitePrimary hover:brightness-110",
+    secondary: "bg-bgElevated text-whitePrimary border border-borderSoft hover:bg-white/10",
+    ghost: "bg-transparent text-whiteMuted border border-borderSoft hover:text-whitePrimary hover:bg-white/5",
+    danger: "bg-accentRed/90 text-whitePrimary hover:brightness-110",
   };
 
   const sizes = {
-    sm: "px-3 py-1 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg",
+    sm: "px-3 py-2 text-xs",
+    md: "px-4 py-2.5 text-sm",
+    lg: "px-5 py-3 text-sm",
   };
 
   return (
@@ -28,11 +25,10 @@ export const Button = ({
       onClick={onClick}
       disabled={disabled}
       className={`
-        ${variants[variant]}
-        ${sizes[size]}
-        rounded-lg font-semibold transition-all duration-200
+        rounded-xl2 font-semibold tracking-wide transition-all duration-200
+        ${variants[variant]} ${sizes[size]}
         disabled:opacity-50 disabled:cursor-not-allowed
-        hover:scale-105 active:scale-95
+        active:scale-[0.98]
         ${className}
       `}
       {...props}
@@ -43,3 +39,4 @@ export const Button = ({
 };
 
 export default Button;
+

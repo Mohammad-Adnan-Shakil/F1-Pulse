@@ -1,45 +1,35 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        primary: "#E8002D",        // F1 Red
-        background: "#0F0F0F",     // Main background
-        secondary: "#1A1A1A",      // Card background
-        surface: "#242424",        // Elevated surface
-        accent: "#C9A84C",         // Gold accent
-
-        textPrimary: "#F0F0F0",
-        textSecondary: "#A0A0A0",
-
-        success: "#00C853",
-        danger: "#FF3D00",
-
-        border: "#2A2A2A",
+        bgPrimary: "#0a0a0f",
+        bgCard: "#0f0f1a",
+        bgElevated: "#141420",
+        accentRed: "#e8002d",
+        accentGold: "#ffd700",
+        whitePrimary: "#ffffff",
+        whiteMuted: "rgba(255,255,255,0.6)",
+        whiteFaint: "rgba(255,255,255,0.08)",
+        borderSoft: "rgba(255,255,255,0.06)",
+        successGreen: "#00d4a0",
       },
-
       fontFamily: {
-        display: ["'Barlow Condensed'", "sans-serif"],
-        body: ["Inter", "sans-serif"],
-        mono: ["'JetBrains Mono'", "monospace"],
+        inter: ["Inter", "sans-serif"],
       },
-
-      letterSpacing: {
-        widePlus: "0.08em",
+      borderRadius: {
+        xl2: "16px",
       },
-
       boxShadow: {
-        subtle: "0 0 0 1px #2A2A2A",
+        card: "0 10px 30px rgba(0,0,0,0.25)",
+        redGlow: "0 0 0 1px rgba(232,0,45,0.25), 0 16px 32px rgba(232,0,45,0.15)",
       },
-
-      transitionTimingFunction: {
-        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+      letterSpacing: {
+        section: "0.2em",
       },
     },
   },
   plugins: [],
 };
+

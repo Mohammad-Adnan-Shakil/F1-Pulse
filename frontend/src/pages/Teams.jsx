@@ -1,109 +1,128 @@
-import { useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { Card, Input } from "../components/common";
-import { useFetch } from "../hooks/useFetch";
+﻿import { useMemo, useState } from "react";
+import { Shield } from "lucide-react";
+import { Card, EmptyState, ErrorState, LoadingState } from "../components/common";
+import useFetch from "../hooks/useFetch";
+import usePageTitle from "../hooks/usePageTitle";
+import { teamColor } from "../utils/formatters";
 
 const Teams = () => {
-  const { data: teamsData, loading: teamsLoading, error: teamsError } = useFetch("/constructors");
-  const { data: driversData } = useFetch("/drivers");
+  usePageTitle("Constructors");
+
+  const {
+    data: constructors,
+    loading: constructorsLoading,
+    error: constructorsError,
+    refetch: refetchConstructors,
+  } = useFetch("/constructors");
+  const { data: drivers, loading: driversLoading, error: driversError, refetch: refetchDrivers } = useFetch("/drivers");
+
   const [search, setSearch] = useState("");
 
-  const teams = teamsData || [];
-  const drivers = driversData || [];
+  const teams = constructors || [];
+  const driverList = drivers || [];
+
+  const loading = constructorsLoading || driversLoading;
+  const error = constructorsError || driversError;
 
   const standings = useMemo(() => {
     return teams
       .filter((team) => team.name?.toLowerCase().includes(search.toLowerCase()))
       .map((team) => {
-        const teamDrivers = drivers.filter((driver) => driver.team === team.name);
-        const totalPoints = teamDrivers.reduce((sum, driver) => sum + Number(driver.points || 0), 0);
+        const lineup = driverList
+          .filter((driver) => driver.team === team.name)
+          .sort((a, b) => Number(b.points || 0) - Number(a.points || 0));
+
+        const points = lineup.reduce((sum, driver) => sum + Number(driver.points || 0), 0);
+
         return {
           ...team,
-          teamDrivers,
-          totalPoints,
+          points,
+          lineup,
         };
       })
-      .sort((a, b) => b.totalPoints - a.totalPoints);
-  }, [teams, drivers, search]);
+      .sort((a, b) => b.points - a.points);
+  }, [teams, driverList, search]);
 
-  if (teamsLoading) {
+  if (loading) return <LoadingState message="Loading constructor standings..." />;
+  if (error) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-white">Constructor Standings</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[...Array(6)].map((_, idx) => (
-            <div key={idx} className="h-44 bg-gray-900 border border-gray-800 rounded-xl animate-pulse" />
-          ))}
-        </div>
-      </div>
+      <ErrorState
+        message={error}
+        onRetry={() => {
+          refetchConstructors();
+          refetchDrivers();
+        }}
+      />
     );
   }
-
-  if (teamsError) {
-    return (
-      <Card>
-        <p className="text-red-400 font-semibold">Unable to load constructors.</p>
-        <p className="text-gray-400 mt-2 text-sm">{teamsError}</p>
-      </Card>
-    );
-  }
+  if (!standings.length) return <EmptyState title="No constructor standings" description="No teams found for this season." />;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white">Constructor Standings</h1>
-        <p className="text-gray-400 mt-2">{standings.length} teams</p>
-      </div>
+      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="section-label">Team Championship</p>
+            <div className="mt-2 flex items-center gap-3">
+              <Shield className="h-6 w-6 text-accentRed" />
+              <h1 className="text-3xl font-bold tracking-tight">CONSTRUCTOR STANDINGS</h1>
+            </div>
+          </div>
 
-      <Input
-        placeholder="Search constructor"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      {standings.length === 0 ? (
-        <Card>
-          <p className="text-gray-300">No constructor matches your search.</p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {standings.map((team, idx) => (
-            <motion.div
-              key={team.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.03 }}
-            >
-              <Card hover>
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase">Position {idx + 1}</p>
-                    <h2 className="text-xl text-white font-bold mt-1">{team.name}</h2>
-                    <p className="text-gray-400 mt-1">{team.nationality}</p>
-                  </div>
-                  <p className="text-3xl text-red-400 font-bold">{team.totalPoints.toFixed(0)}</p>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-800 space-y-2">
-                  <p className="text-xs uppercase text-gray-400">Driver Pairing</p>
-                  {team.teamDrivers.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No drivers mapped yet.</p>
-                  ) : (
-                    team.teamDrivers.map((driver) => (
-                      <div key={driver.driverId} className="flex justify-between text-sm">
-                        <span className="text-white">{driver.name}</span>
-                        <span className="text-green-400">{Number(driver.points || 0).toFixed(0)} pts</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search constructor"
+            className="surface-input w-full lg:w-[260px]"
+          />
         </div>
-      )}
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        {standings.map((team, index) => {
+          const isLeader = index === 0;
+          const accent = isLeader ? "#ffd700" : teamColor(team.name);
+
+          return (
+            <Card
+              key={team.id || team.name}
+              delay={index * 0.05}
+              className="relative overflow-hidden"
+              style={{ borderColor: isLeader ? "rgba(255,215,0,0.5)" : "rgba(255,255,255,0.06)" }}
+            >
+              <div className="absolute inset-y-4 left-0 w-1 rounded-r" style={{ backgroundColor: accent }} />
+
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="section-label">P{index + 1}</span>
+                  <h2 className="mt-2 text-2xl font-bold text-whitePrimary">{team.name}</h2>
+                  <p className="mt-1 text-sm text-whiteMuted">{team.nationality}</p>
+                </div>
+                <p className="text-4xl font-bold text-accentRed">{Math.round(team.points)}</p>
+              </div>
+
+              <div className="mt-5 border-t border-borderSoft pt-4">
+                <p className="section-label mb-3">Driver Pairing</p>
+                {team.lineup.length ? (
+                  <div className="space-y-2">
+                    {team.lineup.map((driver) => (
+                      <div key={driver.driverId} className="flex items-center justify-between text-sm">
+                        <span className="text-whitePrimary">{driver.name}</span>
+                        <span className="text-whiteMuted">{Math.round(driver.points || 0)} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-whiteMuted">No mapped drivers.</p>
+                )}
+              </div>
+            </Card>
+          );
+        })}
+      </section>
     </div>
   );
 };
 
 export default Teams;
+

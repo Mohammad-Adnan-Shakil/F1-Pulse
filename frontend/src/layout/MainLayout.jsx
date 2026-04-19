@@ -1,42 +1,51 @@
+﻿import { AnimatePresence, motion } from "framer-motion";
+import { Menu } from "lucide-react";
 import { useState } from "react";
-import { motion } from "framer-motion";
-import Sidebar from "./Sidebar";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import Sidebar from "./Sidebar";
 
 const MainLayout = ({ children }) => {
   const { user } = useAuth();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background text-textPrimary">
-      <div className="lg:hidden h-14 border-b border-border px-4 flex items-center justify-between">
+    <div className="min-h-screen bg-bgPrimary text-whitePrimary">
+      <div className="lg:hidden flex h-14 items-center justify-between border-b border-borderSoft px-4">
         <button
-          className="px-3 py-1 border border-border rounded-md text-sm"
-          onClick={() => setMobileNavOpen((v) => !v)}
+          className="rounded-lg border border-borderSoft bg-bgElevated p-2 text-whiteMuted"
+          onClick={() => setMobileNavOpen((prev) => !prev)}
+          aria-label="Toggle menu"
         >
-          Menu
+          <Menu className="h-4 w-4" />
         </button>
-        <p className="font-display">F1 PULSE</p>
-        <p className="text-xs text-textSecondary">{user?.username || "User"}</p>
+        <p className="text-sm font-semibold tracking-wide">
+          <span className="text-accentRed">F1</span> PULSE
+        </p>
+        <p className="text-xs text-whiteMuted">{user?.username || "User"}</p>
       </div>
 
       <div className="flex">
         <Sidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
 
-        <main className="flex-1 min-w-0">
-          <div className="hidden lg:flex h-16 items-center justify-between px-6 border-b border-border">
-            <h1 className="font-display text-xl">F1 PULSE</h1>
-            <p className="text-sm text-textSecondary">{user?.username || "User"}</p>
+        <main className="min-w-0 flex-1">
+          <div className="hidden h-16 items-center justify-end border-b border-borderSoft px-6 lg:flex">
+            <p className="text-sm text-whiteMuted">{user?.username || "User"}</p>
           </div>
 
-          <motion.div
-            className="p-4 md:p-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.25 }}
-          >
-            {children}
-          </motion.div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="px-4 py-6 md:px-6"
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>
@@ -44,3 +53,4 @@ const MainLayout = ({ children }) => {
 };
 
 export default MainLayout;
+

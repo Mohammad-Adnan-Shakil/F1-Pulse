@@ -1,16 +1,18 @@
-export const Card = ({ children, className = "", hover = false }) => {
+﻿import { motion } from "framer-motion";
+
+export const Card = ({ children, className = "", hover = true, delay = 0 }) => {
   return (
-    <div
-      className={`
-        bg-gray-900 border border-gray-800 rounded-lg p-6
-        transition-all duration-300
-        ${hover ? "hover:border-red-500 hover:shadow-lg hover:shadow-red-500/20" : ""}
-        ${className}
-      `}
+    <motion.div
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay }}
+      whileHover={hover ? { scale: 1.01 } : undefined}
+      className={`f1-card ${className}`}
     >
       {children}
-    </div>
+    </motion.div>
   );
 };
 
 export default Card;
+
