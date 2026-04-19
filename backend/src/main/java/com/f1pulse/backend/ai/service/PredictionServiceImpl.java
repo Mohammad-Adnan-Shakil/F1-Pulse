@@ -35,6 +35,10 @@ public class PredictionServiceImpl implements PredictionService {
             throw new RuntimeException("ML response missing required prediction fields");
         }
 
-        return new PredictionResponseDTO(predictedPosition, confidence);
+        return new PredictionResponseDTO(round2(predictedPosition), round2(confidence));
+    }
+
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

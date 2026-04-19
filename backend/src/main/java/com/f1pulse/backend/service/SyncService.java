@@ -16,10 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -137,6 +141,7 @@ public class SyncService {
             String key = "races";
             if (!shouldSync(key)) {
                 log.info("Using cached races data");
+                deduplicateScheduleRows(CURRENT_SEASON);
                 return raceRepository.findBySeasonAndDriverIdIsNullOrderByDateAsc(CURRENT_SEASON);
             }
 
@@ -156,9 +161,11 @@ public class SyncService {
 
             List<Race> rowsToPersist = new ArrayList<>();
 
+            LocalDate today = LocalDate.now();
             for (RaceDTO raceDto : calendar) {
+                LocalDate raceDate = parseDateOrMin(raceDto.getDate());
                 List<RaceResultDTO> completedRows = resultsByRound.getOrDefault(raceDto.getRound(), List.of());
-                boolean completed = !completedRows.isEmpty();
+                boolean completed = !completedRows.isEmpty() && !raceDate.isAfter(today);
 
                 Race scheduleRow = new Race(
                         null,
@@ -200,12 +207,48 @@ public class SyncService {
 
             raceRepository.deleteAllInBatch();
             List<Race> saved = raceRepository.saveAll(rowsToPersist);
+            deduplicateScheduleRows(CURRENT_SEASON);
             updateSyncTime(key);
-            return saved;
+            return saved.stream()
+                    .filter(r -> r.getDriverId() == null)
+                    .sorted(Comparator.comparing(r -> Objects.requireNonNullElse(r.getRound(), Integer.MAX_VALUE)))
+                    .toList();
 
         } catch (Exception e) {
             log.error("Error syncing races", e);
             throw e;
+        }
+    }
+
+    public void deduplicateScheduleRows(int season) {
+        List<Race> scheduleRows = raceRepository.findBySeasonAndDriverIdIsNull(season);
+        if (scheduleRows.isEmpty()) {
+            return;
+        }
+
+        Map<String, Race> unique = new LinkedHashMap<>();
+        for (Race race : scheduleRows) {
+            String key = race.getRound() != null
+                    ? "round-" + race.getRound()
+                    : "fallback-" + race.getRaceName() + "-" + race.getDate();
+            unique.putIfAbsent(key, race);
+        }
+
+        List<Race> duplicates = scheduleRows.stream()
+                .filter(race -> unique.values().stream().noneMatch(kept -> kept.getId().equals(race.getId())))
+                .toList();
+
+        if (!duplicates.isEmpty()) {
+            raceRepository.deleteAllInBatch(duplicates);
+            log.info("Removed {} duplicate race schedule rows", duplicates.size());
+        }
+    }
+
+    private static LocalDate parseDateOrMin(String date) {
+        try {
+            return LocalDate.parse(date);
+        } catch (Exception ex) {
+            return LocalDate.MIN;
         }
     }
 }

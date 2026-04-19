@@ -45,10 +45,10 @@ public class SimulationServiceImpl implements SimulationService {
 
         MultiSimulationResponseDTO response = new MultiSimulationResponseDTO();
 
-        response.setOldAverage(oldAvg);
-        response.setNewAverage(newAvg);
-        response.setConsistencyChange(oldStd - newStd);
-        response.setTrendChange(newTrend - oldTrend);
+        response.setOldAverage(round2(oldAvg));
+        response.setNewAverage(round2(newAvg));
+        response.setConsistencyChange(round2(oldStd - newStd));
+        response.setTrendChange(round2(newTrend - oldTrend));
 
         response.setImpactLevel(calculateImpact(oldAvg, newAvg));
         response.setProjectedRankingImpact(calculateRankingImpact(oldAvg, newAvg));
@@ -71,7 +71,7 @@ public class SimulationServiceImpl implements SimulationService {
         simulatedPositions.add(request.getNewPosition());
         double newAverage = StatsUtil.calculateAverage(simulatedPositions);
 
-        return new SimulationResponseDTO(oldAverage, newAverage, calculateImpact(oldAverage, newAverage));
+        return new SimulationResponseDTO(round2(oldAverage), round2(newAverage), calculateImpact(oldAverage, newAverage));
     }
 
     private String calculateImpact(double oldAvg, double newAvg) {
@@ -92,5 +92,9 @@ public class SimulationServiceImpl implements SimulationService {
         if (diff > 0) return "Potential small gain";
         if (diff < -1) return "Likely to lose positions";
         return "Minimal impact";
+    }
+
+    private static double round2(double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

@@ -47,6 +47,11 @@ const AIPage = () => {
   };
 
   const isSetupLoading = driversLoading || racesLoading;
+  const confidencePercent = (() => {
+    const raw = Number(result?.prediction?.confidence ?? 0);
+    const normalized = raw <= 1 ? raw * 100 : raw;
+    return Math.max(0, Math.min(100, Math.round(normalized)));
+  })();
 
   return (
     <div className="space-y-6">
@@ -146,9 +151,13 @@ const AIPage = () => {
               <Card className="border-red-500/50 bg-red-500/5">
                 <p className="text-xs uppercase text-gray-400">Predicted Finish</p>
                 <div className="flex items-end justify-between mt-2">
-                  <p className="text-5xl font-bold text-red-400">P{result.prediction?.predictedPosition ?? "-"}</p>
+                  <p className="text-5xl font-bold text-red-400">
+                    P{result.prediction?.predictedPosition != null
+                      ? Number(result.prediction.predictedPosition).toFixed(2)
+                      : "-"}
+                  </p>
                   <p className="text-xl text-white">
-                    Confidence: {Math.round((result.prediction?.confidence || 0) * 100)}%
+                    Confidence: {confidencePercent}%
                   </p>
                 </div>
               </Card>
@@ -156,7 +165,11 @@ const AIPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <p className="text-xs uppercase text-gray-400">Average Finish</p>
-                  <p className="text-3xl text-blue-300 font-bold mt-2">P{result.insights?.averageFinish ?? "-"}</p>
+                  <p className="text-3xl text-blue-300 font-bold mt-2">
+                    P{result.insights?.averageFinish != null
+                      ? Number(result.insights.averageFinish).toFixed(2)
+                      : "-"}
+                  </p>
                 </Card>
                 <Card>
                   <p className="text-xs uppercase text-gray-400">Consistency</p>
@@ -175,11 +188,19 @@ const AIPage = () => {
                 <div className="grid grid-cols-2 gap-4 mt-3">
                   <div>
                     <p className="text-xs uppercase text-gray-400">Current Avg</p>
-                    <p className="text-2xl text-red-300 font-bold mt-1">P{result.simulation?.oldAverage ?? "-"}</p>
+                    <p className="text-2xl text-red-300 font-bold mt-1">
+                      P{result.simulation?.oldAverage != null
+                        ? Number(result.simulation.oldAverage).toFixed(2)
+                        : "-"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs uppercase text-gray-400">Projected Avg</p>
-                    <p className="text-2xl text-green-300 font-bold mt-1">P{result.simulation?.newAverage ?? "-"}</p>
+                    <p className="text-2xl text-green-300 font-bold mt-1">
+                      P{result.simulation?.newAverage != null
+                        ? Number(result.simulation.newAverage).toFixed(2)
+                        : "-"}
+                    </p>
                   </div>
                 </div>
                 <p className="text-gray-300 mt-3 text-sm">Impact: {result.simulation?.impact || "N/A"}</p>

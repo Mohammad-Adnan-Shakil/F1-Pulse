@@ -50,11 +50,11 @@ public class AIController {
 
             Map<String, Object> prediction = new LinkedHashMap<>();
             prediction.put("predictedPosition", round2(intelligence.getXgbPrediction()));
-            prediction.put("confidence", intelligence.getConfidence());
+            prediction.put("confidence", round2(intelligence.getConfidence()));
 
             Map<String, Object> insightPayload = new LinkedHashMap<>();
             insightPayload.put("averageFinish", round2(insights.getAvgPosition()));
-            insightPayload.put("consistencyScore", Math.min(1.0, insights.getConsistencyScore() / 10.0));
+            insightPayload.put("consistencyScore", round2(Math.min(1.0, insights.getConsistencyScore() / 10.0)));
             insightPayload.put("trend", insights.getFormTrend());
             insightPayload.put("rating", insights.getPerformanceRating());
 

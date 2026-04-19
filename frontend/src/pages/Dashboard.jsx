@@ -42,10 +42,21 @@ const Dashboard = () => {
     points: Number(driver.points || 0),
   }));
 
-  const raceProgressData = raceList.map((race) => ({
-    round: `R${race.round}`,
-    completed: race.status === "COMPLETED" ? 1 : 0,
-  }));
+  const raceProgressData = raceList
+    .slice()
+    .sort((a, b) => (a.round ?? Number.MAX_SAFE_INTEGER) - (b.round ?? Number.MAX_SAFE_INTEGER))
+    .map((race, idx, arr) => {
+      const completedSoFar = arr
+        .slice(0, idx + 1)
+        .filter((item) => item.status === "COMPLETED").length;
+      const completionPct = Math.round((completedSoFar / arr.length) * 100);
+
+      return {
+        round: `R${race.round}`,
+        completedSoFar,
+        completionPct,
+      };
+    });
 
   if (isLoading) {
     return (
@@ -132,12 +143,15 @@ const Dashboard = () => {
               <LineChart data={raceProgressData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                 <XAxis dataKey="round" stroke="#9CA3AF" />
-                <YAxis stroke="#9CA3AF" allowDecimals={false} domain={[0, 1]} />
+                <YAxis stroke="#9CA3AF" allowDecimals={false} domain={[0, 100]} />
                 <Tooltip
                   contentStyle={{ backgroundColor: "#111827", border: "1px solid #374151" }}
-                  formatter={(value) => (value === 1 ? "Completed" : "Scheduled")}
+                  formatter={(value, _name, item) => [
+                    `${value}%`,
+                    `Completed ${item?.payload?.completedSoFar ?? 0} races`,
+                  ]}
                 />
-                <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={3} />
+                <Line type="monotone" dataKey="completionPct" stroke="#22c55e" strokeWidth={3} />
               </LineChart>
             </ResponsiveContainer>
           )}

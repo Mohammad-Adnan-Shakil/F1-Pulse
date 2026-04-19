@@ -17,5 +17,6 @@ public class SyncScheduler {
         syncService.syncTeams();
         syncService.syncDrivers();
         syncService.syncRaces();
+        syncService.deduplicateScheduleRows(2026);
     }
 }

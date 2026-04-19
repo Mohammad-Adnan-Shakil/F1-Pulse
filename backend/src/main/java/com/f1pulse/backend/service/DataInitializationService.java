@@ -22,6 +22,7 @@ public class DataInitializationService implements ApplicationRunner {
             syncService.syncTeams();
             syncService.syncDrivers();
             syncService.syncRaces();
+            syncService.deduplicateScheduleRows(2026);
             log.info("Initial F1 sync completed");
         } catch (Exception ex) {
             log.warn("Initial F1 sync failed: {}", ex.getMessage());

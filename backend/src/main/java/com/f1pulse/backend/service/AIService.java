@@ -74,11 +74,11 @@ public class AIService {
 
         DriverIntelligenceResponse response = new DriverIntelligenceResponse();
         response.setDriverId(driverId);
-        response.setRfPrediction(result.path("rf_prediction").asDouble());
-        response.setXgbPrediction(result.path("xgb_prediction").asDouble());
+        response.setRfPrediction(round2(result.path("rf_prediction").asDouble()));
+        response.setXgbPrediction(round2(result.path("xgb_prediction").asDouble()));
         response.setSimulationImpact(result.path("simulation_impact").asText("neutral"));
         response.setFinalInsight(result.path("final_insight").asText("Model output generated."));
-        response.setConfidence(result.path("confidence").asDouble());
+        response.setConfidence(round2(result.path("confidence").asDouble()));
         response.setConfidenceLabel(result.path("confidence_label").asText("unknown"));
         return response;
     }

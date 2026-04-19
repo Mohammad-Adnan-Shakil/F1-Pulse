@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,11 +43,21 @@ public class RaceController {
                             Comparator.comparing((Race r) -> Objects.requireNonNullElse(r.getRound(), Integer.MAX_VALUE))
                                     .thenComparing(Race::getDate, Comparator.nullsLast(String::compareTo))
                     )
+                    .peek(race -> race.setStatus(resolveRaceStatus(race.getDate())))
                     .toList();
 
             return ResponseEntity.ok(cleaned);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Failed to load races");
+        }
+    }
+
+    private static String resolveRaceStatus(String raceDate) {
+        try {
+            LocalDate parsed = LocalDate.parse(raceDate);
+            return parsed.isAfter(LocalDate.now()) ? "SCHEDULED" : "COMPLETED";
+        } catch (Exception ex) {
+            return "SCHEDULED";
         }
     }
 }
