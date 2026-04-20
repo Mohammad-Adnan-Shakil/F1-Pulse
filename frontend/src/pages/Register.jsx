@@ -35,7 +35,6 @@ const Register = () => {
       setSuccess("Account created. Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      console.log(err);
       setError("Registration failed");
     } finally {
       setLoading(false);

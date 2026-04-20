@@ -25,7 +25,6 @@ export const useFetch = (endpoint, dependencies = []) => {
     } catch (err) {
       const errorMsg = err.response?.data?.message || err.message || "Failed to fetch data";
       setError(errorMsg);
-      console.error(`Error fetching ${endpoint}:`, err);
     } finally {
       setLoading(false);
     }

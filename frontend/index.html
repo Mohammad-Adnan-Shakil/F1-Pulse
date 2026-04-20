@@ -4,16 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%23e8002d'/><text x='4' y='22' font-family='Arial' font-weight='900' font-size='14' fill='white'>F1</text></svg>"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>F1 Pulse</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     <meta name="theme-color" content="#0a0a0f" />
+    
+    <!-- SEO Meta Tags -->
+    <title>F1 Pulse — AI Race Intelligence</title>
+    <meta name="description" content="F1 Pulse — AI-powered Formula 1 intelligence platform. Live 2026 standings, race predictions powered by XGBoost and Random Forest, and strategic what-if simulations.">
+    <meta name="keywords" content="F1, Formula 1, race prediction, F1 standings, F1 2026, AI prediction, Formula 1 stats">
+    <meta name="author" content="Mohammad Adnan Shakil">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="F1 Pulse — AI Race Intelligence">
+    <meta property="og:description" content="Live F1 standings, AI-powered race predictions, and strategic simulations for the 2026 Formula 1 season.">
+    <meta property="og:url" content="https://f1pulse.app">
+    
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="F1 Pulse — AI Race Intelligence">
+    <meta name="twitter:description" content="Live F1 standings and AI race predictions for the 2026 season.">
+    
+    <!-- Resource Hints — CRITICAL for performance -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Optimized Font Loading -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" media="print" onload="this.media='all'">
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap">
+    </noscript>
+
+    <!-- Async CSS Loading — eliminates render-blocking -->
+    <link rel="preload" href="/src/index.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/src/index.css"></noscript>
   </head>
 
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- Defer script execution until DOM is ready -->
+    <script type="module" src="/src/main.jsx" defer></script>
   </body>
 </html>

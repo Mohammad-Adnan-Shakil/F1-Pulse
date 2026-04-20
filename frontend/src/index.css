@@ -41,6 +41,23 @@
   ::-webkit-scrollbar-track {
     background: #0a0a0f;
   }
+
+  /* Keyboard focus states */
+  :focus-visible {
+    outline: 2px solid #e8002d;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
@@ -81,5 +98,11 @@
     background: rgba(15, 15, 26, 0.7);
     backdrop-filter: blur(8px);
   }
+}
+
+/* Skeleton loader shimmer animation — CRITICAL for LCP */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../utils/axios";
 import { Eye, EyeOff } from "lucide-react";
@@ -10,6 +10,7 @@ const Login = () => {
   }, []);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const [isLogin, setIsLogin] = useState(true);
@@ -49,11 +50,12 @@ const Login = () => {
 
     try {
       const res = await api.post("/auth/login", loginForm);
-      console.log("LOGIN RESPONSE:", res.data);
       login(res.data);
-      navigate("/dashboard");
+      
+      // Redirect to the page user was trying to access, or dashboard
+      const from = location.state?.from || "/dashboard";
+      navigate(from);
     } catch (err) {
-      console.log(err);
       setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
@@ -85,7 +87,6 @@ const Login = () => {
         setSuccess("");
       }, 1500);
     } catch (err) {
-      console.log(err);
       setError(err.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);

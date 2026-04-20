@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await fetch("http://localhost:9090/api/user/me", {
+        const res = await fetch("http://localhost:8080/api/user/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -28,10 +28,10 @@ export const AuthProvider = ({ children }) => {
           setUser(data?.data || data);
         } else {
           // ❌ DO NOT logout here
-          console.warn("User fetch failed, but keeping token");
+
         }
       } catch (err) {
-        console.error("Auth error:", err);
+
       } finally {
         setLoading(false);
       }

@@ -7,22 +7,38 @@ import {
   Shield,
   User,
   Users,
+  BookOpen,
+  Lock,
+  LogIn,
 } from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const NAV_ITEMS = [
+const NAV_ITEMS_PUBLIC = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/ai", label: "AI Prediction", icon: Brain },
   { to: "/drivers", label: "Drivers", icon: Users },
   { to: "/races", label: "Races", icon: Flag },
   { to: "/constructors", label: "Constructors", icon: Shield },
+  { to: "/history", label: "History", icon: BookOpen },
+];
+
+const NAV_ITEMS_PROTECTED = [
+  { to: "/ai", label: "AI Prediction", icon: Brain },
   { to: "/profile", label: "Profile", icon: User },
 ];
 
 const Sidebar = ({ mobileOpen = false, onNavigate = () => {} }) => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, isAuthenticated, user } = useAuth();
+
+  const handleAIClick = () => {
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: "/ai" } });
+    } else {
+      navigate("/ai");
+    }
+    onNavigate();
+  };
 
   return (
     <>
@@ -51,7 +67,8 @@ const Sidebar = ({ mobileOpen = false, onNavigate = () => {} }) => {
             </div>
 
             <nav className="px-3 py-4">
-              {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+              {/* Public Navigation Items */}
+              {NAV_ITEMS_PUBLIC.map(({ to, label, icon: Icon }) => (
                 <NavLink key={to} to={to} onClick={onNavigate} className="group relative mb-1 block">
                   {({ isActive }) => (
                     <div
@@ -75,20 +92,92 @@ const Sidebar = ({ mobileOpen = false, onNavigate = () => {} }) => {
                   )}
                 </NavLink>
               ))}
+
+              {/* Protected Navigation Items */}
+              {/* AI Prediction - Special handling */}
+              <button
+                onClick={handleAIClick}
+                className={`
+                  group relative mb-1 w-full text-left
+                  flex items-center gap-3 rounded-xl2 px-3 py-3 text-sm transition-all duration-200
+                  ${isAuthenticated ? "text-whiteMuted hover:bg-white/5 hover:text-whitePrimary" : "text-whiteMuted/60 hover:bg-white/5"}
+                `}
+              >
+                <Brain className="h-4 w-4 shrink-0" />
+                <span className="lg:hidden xl:inline">AI Prediction</span>
+                {!isAuthenticated && <Lock className="h-3 w-3 ml-auto lg:ml-0 xl:ml-auto" />}
+              </button>
+
+              {/* Profile - Only show if authenticated */}
+              {isAuthenticated && (
+                <NavLink to="/profile" onClick={onNavigate} className="group relative mb-1 block">
+                  {({ isActive }) => (
+                    <div
+                      className={`
+                        flex items-center gap-3 rounded-xl2 px-3 py-3 text-sm transition-all duration-200
+                        ${isActive ? "bg-accentRed/10 text-whitePrimary" : "text-whiteMuted hover:bg-white/5 hover:text-whitePrimary"}
+                      `}
+                    >
+                      <User className="h-4 w-4 shrink-0" />
+                      <span className="lg:hidden xl:inline">Profile</span>
+
+                      {isActive ? (
+                        <motion.div
+                          layoutId="active-nav-underline"
+                          className="absolute bottom-1 left-3 right-3 h-[2px] rounded-full bg-accentRed"
+                        />
+                      ) : null}
+
+                      {isActive ? <span className="absolute left-0 top-2 h-7 w-[3px] rounded-r-full bg-accentRed" /> : null}
+                    </div>
+                  )}
+                </NavLink>
+              )}
             </nav>
           </div>
 
           <div className="border-t border-borderSoft p-3">
-            <button
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
-              className="flex w-full items-center gap-3 rounded-xl2 px-3 py-3 text-left text-sm text-accentRed transition hover:bg-accentRed/10"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="lg:hidden xl:inline">Logout</span>
-            </button>
+            {isAuthenticated ? (
+              <>
+                {/* User Info */}
+                <div className="px-3 py-2 mb-2 rounded-lg bg-white/5 lg:hidden xl:block">
+                  <p className="text-xs text-whiteMuted truncate">Signed in as:</p>
+                  <p className="text-sm font-medium text-whitePrimary truncate">{user?.email || "User"}</p>
+                </div>
+
+                {/* Logout Button */}
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate("/dashboard");
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl2 px-3 py-3 text-left text-sm text-accentRed transition hover:bg-accentRed/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="lg:hidden xl:inline">Logout</span>
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Sign In Button */}
+                <button
+                  onClick={() => navigate("/login")}
+                  className="flex w-full items-center gap-3 rounded-xl2 px-3 py-3 text-left text-sm bg-accentRed text-white font-medium transition hover:bg-accentRed/90 mb-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span className="lg:hidden xl:inline">Sign In</span>
+                </button>
+
+                {/* Sign Up Button */}
+                <button
+                  onClick={() => navigate("/register")}
+                  className="flex w-full items-center gap-3 rounded-xl2 px-3 py-3 text-left text-sm border border-borderSoft text-whiteMuted font-medium transition hover:bg-white/5"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="lg:hidden xl:inline">Sign Up</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </aside>

@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,17 +19,19 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * ✅ Production-Ready Security Configuration
+ * ✅ Production-Ready Security Configuration with Public/Protected Routes
  * 
  * Features:
  * 1. Stateless session (STATELESS) - suitable for JWT
  * 2. CORS properly configured for frontend
  * 3. CSRF disabled (stateless API)
  * 4. JWT filter added before UsernamePasswordAuthenticationFilter
- * 5. Proper authentication/authorization setup
+ * 5. Public routes for F1 stats, historical data, and auth
+ * 6. Protected routes for AI predictions and admin functions
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
@@ -54,16 +57,29 @@ public class SecurityConfig {
                 
                 // ✅ Authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public endpoints - Authentication
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         
-                        // Data endpoints - public (no auth required)
-                        .requestMatchers("/api/drivers").permitAll()
-                        .requestMatchers("/api/races").permitAll()
-                        .requestMatchers("/api/constructors").permitAll()
-                        .requestMatchers("/api/teams").permitAll()
+                        // Public endpoints - F1 Stats (no login required)
+                        .requestMatchers("/api/drivers/**").permitAll()
+                        .requestMatchers("/api/races/**").permitAll()
+                        .requestMatchers("/api/constructors/**").permitAll()
+                        .requestMatchers("/api/teams/**").permitAll()
+                        
+                        // Public endpoints - Historical F1 Data (no login required)
+                        .requestMatchers("/api/historical/**").permitAll()
+                        
+                        // Protected endpoints - Admin only
+                        .requestMatchers("/api/admin/**").authenticated()
+                        
+                        // Protected endpoints - AI Predictions (authenticated users)
+                        .requestMatchers("/api/ai/**").authenticated()
+                        
+                        // Protected endpoints - User profile
+                        .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/profile/**").authenticated()
                         
                         // All other requests require authentication
                         .anyRequest().authenticated()
@@ -91,10 +107,12 @@ public class SecurityConfig {
                 "http://localhost:5173",      // Development
                 "http://localhost:5174",      // Development (alternate port)
                 "http://localhost:5175",      // Development (Vite fallback port)
+                "http://localhost:4173",      // Production preview build
                 "http://localhost:3000",      // Alternative dev port
                 "http://127.0.0.1:5173",
                 "http://127.0.0.1:5174",
-                "http://127.0.0.1:5175"
+                "http://127.0.0.1:5175",
+                "http://127.0.0.1:4173"       // Production preview build (IP)
         ));
 
         // ✅ Allow HTTP methods
