@@ -64,15 +64,25 @@ public class HistoricalController {
                 return ResponseEntity.ok(seasons);
             }
             
-            // ✅ Fallback to database
-            log.info("⚠️ [HistoricalController] Ergast API empty, falling back to database");
+            // ✅ Fallback to database if Ergast is empty/down
+            log.warn("⚠️ [HistoricalController] Ergast API returned empty, falling back to database");
             List<HistoricalSeason> dbSeasons = seasonRepository.findAll();
             dbSeasons.sort(Comparator.comparing(HistoricalSeason::getYear).reversed());
-            log.info("✅ [HistoricalController] Returned {} seasons from database", dbSeasons.size());
-            return ResponseEntity.ok(dbSeasons);
+            
+            // Convert database seasons to same format as Ergast
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (HistoricalSeason season : dbSeasons) {
+                Map<String, Object> seasonMap = new HashMap<>();
+                seasonMap.put("year", season.getYear());
+                seasonMap.put("id", season.getYear());
+                result.add(seasonMap);
+            }
+            
+            log.info("✅ [HistoricalController] Returned {} seasons from database", result.size());
+            return ResponseEntity.ok(result);
             
         } catch (Exception e) {
-            log.error("❌ [HistoricalController] Error fetching seasons: {}", e.getMessage(), e);
+            log.error("❌ [HistoricalController] Error fetching seasons: {} | {}", e.getClass().getSimpleName(), e.getMessage(), e);
             log.info("⚠️ [HistoricalController] Returning empty list as fallback");
             return ResponseEntity.ok(new ArrayList<>());
         }
@@ -98,25 +108,39 @@ public class HistoricalController {
                 response.put("races", ergastRaces);
                 response.put("raceCount", ergastRaces.size());
                 log.info("✅ [HistoricalController] Returning {} races for season {} from Ergast API", ergastRaces.size(), year);
-                log.debug("✅ [HistoricalController] Response body: {}", response);
                 return ResponseEntity.ok(response);
             }
             
-            // ✅ Fallback to database
-            log.info("⚠️ [HistoricalController] Ergast API empty for year {}, falling back to database", year);
+            // ✅ Fallback to database if Ergast is empty/down
+            log.warn("⚠️ [HistoricalController] Ergast API returned empty for year {}, falling back to database", year);
             Optional<HistoricalSeason> season = seasonRepository.findByYear(year);
-            List<HistoricalRace> races = raceRepository.findBySeasonYearOrderByRound(year);
-            
+            List<HistoricalRace> dbRaces = raceRepository.findBySeasonYearOrderByRound(year);
+
+            // Convert database races to same format as Ergast
+            List<Map<String, Object>> convertedRaces = new ArrayList<>();
+            for (HistoricalRace race : dbRaces) {
+                Map<String, Object> raceMap = new HashMap<>();
+                raceMap.put("round", race.getRound());
+                raceMap.put("id", race.getRound());
+                raceMap.put("raceName", race.getName());
+                raceMap.put("date", race.getDate());
+                raceMap.put("circuitName", race.getCircuitName());
+                raceMap.put("location", race.getLocation());
+                raceMap.put("results", new ArrayList<>());
+                raceMap.put("hasResults", false);
+                convertedRaces.add(raceMap);
+            }
+
             Map<String, Object> response = new HashMap<>();
-            response.put("season", season.isPresent() ? season.get() : null);
-            response.put("races", races);
-            response.put("raceCount", races.size());
-            
-            log.info("✅ [HistoricalController] Returned {} races for season {} from database", races.size(), year);
+            response.put("season", season.isPresent() ? Map.of("year", season.get().getYear(), "totalRounds", convertedRaces.size()) : null);
+            response.put("races", convertedRaces);
+            response.put("raceCount", convertedRaces.size());
+
+            log.info("✅ [HistoricalController] Returned {} races for season {} from database", convertedRaces.size(), year);
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            log.error("❌ [HistoricalController] Error fetching season {}: {}", year, e.getMessage(), e);
+            log.error("❌ [HistoricalController] Error fetching season {}: {} | {}", year, e.getClass().getSimpleName(), e.getMessage(), e);
             Map<String, Object> response = new HashMap<>();
             response.put("season", null);
             response.put("races", new ArrayList<>());
