@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import api from "../utils/axios";
 
 const AuthContext = createContext();
 
@@ -17,21 +18,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const res = await fetch("http://localhost:8080/api/user/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data?.data || data);
-        } else {
-          // ❌ DO NOT logout here
-
-        }
+        const res = await api.get("/user/me");
+        setUser(res.data?.data || res.data);
       } catch (err) {
-
+        // Error handling if needed
       } finally {
         setLoading(false);
       }

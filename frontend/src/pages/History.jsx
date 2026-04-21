@@ -1,160 +1,177 @@
-import { useState, useEffect } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, CalendarDays, Flag } from "lucide-react";
 import { Card } from "../components/common/Card";
 import { Loader } from "../components/common/Loader";
-import { Flag, Trophy, Users } from "lucide-react";
+import api from "../services/api";
 
-/**
- * Season Browser Page
- * Browse all F1 seasons from 1950-2026
- */
+const toSeasonArray = (payload) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.seasons)) return payload.seasons;
+  return [];
+};
+
 const History = () => {
   useEffect(() => {
     document.title = "History | F1 Pulse";
   }, []);
 
   const [seasons, setSeasons] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(2026);
+  const [selectedYear, setSelectedYear] = useState(null);
   const [seasonDetail, setSeasonDetail] = useState(null);
   const [races, setRaces] = useState([]);
-  const [loading, setLoading] = useState(true);
+
+  const [seasonsLoading, setSeasonsLoading] = useState(true);
+  const [seasonLoading, setSeasonLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchSeasons = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("http://localhost:8080/api/historical/seasons");
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch seasons");
-        }
+  const sortedSeasons = useMemo(
+    () => seasons.slice().sort((a, b) => Number(b.year) - Number(a.year)),
+    [seasons]
+  );
 
-        const data = await response.json();
-        setSeasons(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+  const fetchSeasons = async () => {
+    try {
+      setError(null);
+      setSeasonsLoading(true);
+
+      const response = await api.get("/historical/seasons");
+      const list = toSeasonArray(response.data);
+      setSeasons(list);
+
+      if (list.length > 0) {
+        const firstYear = Number(list[0].year);
+        setSelectedYear(firstYear);
       }
-    };
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to load seasons");
+    } finally {
+      setSeasonsLoading(false);
+    }
+  };
 
+  const fetchSeasonDetail = async (year) => {
+    if (!year) return;
+
+    try {
+      setError(null);
+      setSeasonLoading(true);
+
+      const response = await api.get(`/historical/season/${year}`);
+      const payload = response.data;
+      setSeasonDetail(payload?.season || null);
+      setRaces(Array.isArray(payload?.races) ? payload.races : []);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to load season details");
+      setSeasonDetail(null);
+      setRaces([]);
+    } finally {
+      setSeasonLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchSeasons();
   }, []);
 
   useEffect(() => {
-    const fetchSeasonDetail = async () => {
-      if (!selectedYear) return;
-      
-      try {
-        const response = await fetch(`http://localhost:8080/api/historical/season/${selectedYear}`);
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch season detail");
-        }
-
-        const data = await response.json();
-        setSeasonDetail(data.season);
-        setRaces(data.races || []);
-      } catch (err) {
-
-      }
-    };
-
-    fetchSeasonDetail();
+    if (selectedYear) {
+      fetchSeasonDetail(selectedYear);
+    }
   }, [selectedYear]);
 
-  if (loading) return <Loader />;
-
-  if (error) {
+  if (seasonsLoading) {
     return (
-      <div className="p-6">
-        <div className="text-center text-red-500">
-          <p className="text-xl font-bold mb-2">Error Loading History</p>
-          <p>{error}</p>
-        </div>
+      <div className="py-10">
+        <Loader size="lg" message="Loading historical seasons..." />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-whitePrimary mb-2">F1 History</h1>
-        <p className="text-whiteMuted">Browse F1 seasons from 1950 to present</p>
+      <div>
+        <h1 className="text-3xl font-bold text-whitePrimary">F1 History Browser</h1>
+        <p className="text-whiteMuted mt-1">Explore full season calendars and race details.</p>
       </div>
 
-      {/* Year Selector */}
-      <div className="space-y-2">
-        <label className="text-whitePrimary font-medium block">Select Year:</label>
+      {error ? (
+        <Card className="border-accentRed/40 bg-accentRed/10">
+          <div className="flex gap-3 items-start">
+            <AlertTriangle className="h-5 w-5 text-accentRed mt-0.5" />
+            <div>
+              <p className="font-semibold text-whitePrimary">Unable to load history</p>
+              <p className="text-sm text-whiteMuted mt-1">{error}</p>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
+      <Card>
+        <label className="text-sm text-whiteMuted uppercase tracking-[0.2em] block mb-2">Season</label>
         <select
-          value={selectedYear}
+          value={selectedYear || ""}
           onChange={(e) => setSelectedYear(Number(e.target.value))}
-          className="w-full md:w-64 px-4 py-2 bg-bgSecondary border border-borderSoft rounded-lg text-whitePrimary focus:outline-none focus:border-accentRed"
+          className="surface-input max-w-xs"
         >
-          {seasons.map((season) => (
-            <option key={season.id} value={season.year}>
+          {sortedSeasons.map((season) => (
+            <option key={season.id || season.year} value={season.year}>
               {season.year}
             </option>
           ))}
         </select>
-      </div>
+      </Card>
 
-      {/* Season Overview */}
-      {seasonDetail && (
-        <Card className="p-6 bg-gradient-to-r from-accentRed/10 to-transparent">
-          <h2 className="text-2xl font-bold text-whitePrimary mb-4">{seasonDetail.year} Season</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {seasonLoading ? (
+        <Card>
+          <Loader message={`Loading ${selectedYear} season...`} />
+        </Card>
+      ) : null}
+
+      {seasonDetail && !seasonLoading ? (
+        <Card className="bg-gradient-to-r from-accentRed/10 to-transparent">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <p className="text-whiteMuted text-sm mb-1">Total Races</p>
-              <p className="text-2xl font-bold text-accentRed">{seasonDetail.totalRounds}</p>
+              <p className="text-sm text-whiteMuted uppercase tracking-[0.2em]">Season Overview</p>
+              <h2 className="text-2xl font-bold text-whitePrimary mt-2">{seasonDetail.year} Championship</h2>
             </div>
-            {seasonDetail.championDriverId && (
-              <div>
-                <p className="text-whiteMuted text-sm mb-1">Driver Champion</p>
-                <p className="text-lg font-bold text-whitePrimary">Champion Driver</p>
-              </div>
-            )}
-            {seasonDetail.championConstructorId && (
-              <div>
-                <p className="text-whiteMuted text-sm mb-1">Constructor Champion</p>
-                <p className="text-lg font-bold text-whitePrimary">Champion Team</p>
-              </div>
-            )}
+            <div className="inline-flex items-center gap-2 rounded-full bg-bgElevated px-3 py-1.5 text-sm text-whiteMuted">
+              <CalendarDays className="h-4 w-4 text-accentRed" />
+              {seasonDetail.totalRounds || races.length} rounds
+            </div>
           </div>
         </Card>
-      )}
+      ) : null}
 
-      {/* Races Grid */}
-      <div>
-        <h3 className="text-xl font-bold text-whitePrimary mb-4">Races</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {races.length > 0 ? (
-            races.map((race) => (
-              <Card key={race.id} className="p-4 hover:border-accentRed/50 transition-colors cursor-pointer">
+      {!seasonLoading && races.length > 0 ? (
+        <div>
+          <h3 className="text-xl font-bold text-whitePrimary mb-4">Race Calendar</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {races.map((race) => (
+              <Card key={race.id || `${race.round}-${race.raceName}`} className="p-4 hover:border-accentRed/40 cursor-pointer">
                 <div className="flex items-start justify-between mb-2">
                   <div>
-                    <p className="text-whiteMuted text-xs">Round {race.round}</p>
-                    <h4 className="text-whitePrimary font-bold">{race.raceName}</h4>
+                    <p className="text-xs text-whiteMuted uppercase tracking-[0.2em]">Round {race.round}</p>
+                    <h4 className="text-whitePrimary font-bold mt-1">{race.raceName}</h4>
                   </div>
-                  <Flag className="h-5 w-5 text-accentRed flex-shrink-0" />
+                  <Flag className="h-4 w-4 text-accentRed mt-1" />
                 </div>
-                <p className="text-whiteMuted text-sm mb-3">{race.circuitName}</p>
-                <p className="text-whiteMuted text-xs">{race.circuitCountry}</p>
-                {race.raceDate && (
-                  <p className="text-whiteMuted text-xs mt-2">
-                    {new Date(race.raceDate).toLocaleDateString()}
-                  </p>
-                )}
+                <p className="text-sm text-whiteMuted">{race.circuitName}</p>
+                <p className="text-xs text-whiteMuted mt-1">{race.circuitCountry}</p>
+                {race.raceDate ? (
+                  <p className="text-xs text-whiteMuted mt-2">{new Date(race.raceDate).toLocaleDateString()}</p>
+                ) : null}
               </Card>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <p className="text-whiteMuted">No races found for this season</p>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
-      </div>
+      ) : null}
+
+      {!seasonLoading && selectedYear && races.length === 0 && !error ? (
+        <Card className="text-center py-10">
+          <p className="text-whiteMuted">No races found for {selectedYear}.</p>
+        </Card>
+      ) : null}
     </div>
   );
 };

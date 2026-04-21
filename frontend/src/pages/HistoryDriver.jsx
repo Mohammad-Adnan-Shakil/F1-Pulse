@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { Card } from "../components/common/Card";
 import { Loader } from "../components/common/Loader";
 import { Trophy, Users, Flag } from "lucide-react";
+import api from "../utils/axios";
 
 /**
  * Driver Career Page
@@ -25,20 +26,12 @@ const HistoryDriver = () => {
     const fetchDriverData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(
-          `http://localhost:8080/api/historical/driver/${driverCode}/career`
-        );
-        
-        if (!response.ok) {
-          throw new Error("Driver not found");
-        }
-
-        const data = await response.json();
-        setDriver(data.driver);
-        setStats(data.careerStats);
-        setResults(data.results || []);
+        const response = await api.get(`/historical/driver/${driverCode}/career`);
+        setDriver(response.data.driver);
+        setStats(response.data.careerStats);
+        setResults(response.data.results || []);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Driver not found");
       } finally {
         setLoading(false);
       }

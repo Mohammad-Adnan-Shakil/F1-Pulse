@@ -3,28 +3,21 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import "./index.css";
+import api from "./utils/axios.js";
 
 // Auth Context
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 // CRITICAL: Preload dashboard API data before components mount
 // This ensures data is partially/fully loaded by the time Dashboard renders
-// IMPORTANT: Use absolute URL to backend (http://localhost:8080/api/...) not relative paths
-const token = localStorage.getItem('token')
-const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
+// Uses configured API instance with JWT token interceptor
 
-export const dashboardDataPromise = fetch('http://localhost:8080/api/drivers', {
-  headers: authHeaders,
-  credentials: 'include'
-})
-  .then(r => r.json())
+export const dashboardDataPromise = api.get('/drivers')
+  .then(r => r.data)
   .catch(() => null)
 
-export const racesDataPromise = fetch('http://localhost:8080/api/races', {
-  headers: authHeaders,
-  credentials: 'include'
-})
-  .then(r => r.json())
+export const racesDataPromise = api.get('/races')
+  .then(r => r.data)
   .catch(() => null)
 
 // Web Vitals tracking — measure real Core Web Vitals metrics

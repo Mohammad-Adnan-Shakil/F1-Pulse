@@ -32,11 +32,7 @@ const Sidebar = ({ mobileOpen = false, onNavigate = () => {} }) => {
   const { logout, isAuthenticated, user } = useAuth();
 
   const handleAIClick = () => {
-    if (!isAuthenticated) {
-      navigate("/login", { state: { from: "/ai" } });
-    } else {
-      navigate("/ai");
-    }
+    navigate("/ai");
     onNavigate();
   };
 
@@ -186,4 +182,3 @@ const Sidebar = ({ mobileOpen = false, onNavigate = () => {} }) => {
 };
 
 export default Sidebar;
-

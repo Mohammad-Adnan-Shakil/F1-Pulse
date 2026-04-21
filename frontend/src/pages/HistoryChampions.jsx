@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card } from "../components/common/Card";
 import { Loader } from "../components/common/Loader";
 import { Trophy, Medal } from "lucide-react";
+import api from "../utils/axios";
 
 /**
  * Hall of Champions Page
@@ -21,16 +22,10 @@ const HistoryChampions = () => {
     const fetchChampions = async () => {
       try {
         setLoading(true);
-        const response = await fetch("http://localhost:8080/api/historical/champions");
-        
-        if (!response.ok) {
-          throw new Error("Failed to fetch champions");
-        }
-
-        const data = await response.json();
-        setChampions(data);
+        const response = await api.get("/historical/champions");
+        setChampions(response.data);
       } catch (err) {
-        setError(err.message);
+        setError(err.message || "Failed to fetch champions");
       } finally {
         setLoading(false);
       }

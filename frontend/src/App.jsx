@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import RequireFeatureAccess from "./routes/RequireFeatureAccess";
 import MainLayout from "./layout/MainLayout";
 
 // Lazy load pages for code splitting
@@ -86,46 +87,53 @@ function App() {
         }
       />
 
-      {/* Public Routes - Historical Data (No login required) */}
+      {/* Account-required Routes - Feature lock for guests */}
       <Route
         path="/history"
         element={
-          <MainLayout>
-            <History />
-          </MainLayout>
+          <RequireFeatureAccess featureName="History Browser">
+            <MainLayout>
+              <History />
+            </MainLayout>
+          </RequireFeatureAccess>
         }
       />
 
       <Route
         path="/history/driver/:driverCode"
         element={
-          <MainLayout>
-            <HistoryDriver />
-          </MainLayout>
+          <RequireFeatureAccess featureName="Driver History">
+            <MainLayout>
+              <HistoryDriver />
+            </MainLayout>
+          </RequireFeatureAccess>
         }
       />
 
       <Route
         path="/history/champions"
         element={
-          <MainLayout>
-            <HistoryChampions />
-          </MainLayout>
+          <RequireFeatureAccess featureName="Champions History">
+            <MainLayout>
+              <HistoryChampions />
+            </MainLayout>
+          </RequireFeatureAccess>
+        }
+      />
+
+      {/* Account-required Routes - Locked screen for guests */}
+      <Route
+        path="/ai"
+        element={
+          <RequireFeatureAccess featureName="AI Race Predictions">
+            <MainLayout>
+              <AIPage />
+            </MainLayout>
+          </RequireFeatureAccess>
         }
       />
 
       {/* Protected Routes - Authenticated Users Only */}
-      <Route
-        path="/ai"
-        element={
-          <ProtectedRoute>
-            <MainLayout>
-              <AIPage />
-            </MainLayout>
-          </ProtectedRoute>
-        }
-      />
-
       <Route
         path="/profile"
         element={

@@ -45,6 +45,19 @@ const resultColorByPosition = (pos) => {
   return "text-whiteMuted";
 };
 
+const confidenceLabel = (percent) => {
+  if (percent >= 75) return "High Confidence";
+  if (percent >= 50) return "Moderate Confidence";
+  return "Low Confidence";
+};
+
+const verdictForPosition = (position) => {
+  if (position <= 3) return { icon: "🏆", label: "Podium Contender", className: "bg-accentGold/20 text-accentGold" };
+  if (position <= 10) return { icon: "✅", label: "Points Finish", className: "bg-successGreen/20 text-successGreen" };
+  if (position <= 15) return { icon: "⚠️", label: "Midfield Battle", className: "bg-white/15 text-whiteMuted" };
+  return { icon: "❌", label: "Tough Race", className: "bg-accentRed/20 text-accentRed" };
+};
+
 const AIPage = () => {
   usePageTitle("AI Prediction");
 
@@ -64,6 +77,10 @@ const AIPage = () => {
   const selectedDriverData = useMemo(
     () => driverList.find((driver) => driver.driverId === Number(selectedDriver)),
     [driverList, selectedDriver]
+  );
+  const selectedRaceData = useMemo(
+    () => raceList.find((race) => race.raceId === Number(selectedRace)),
+    [raceList, selectedRace]
   );
 
   const upcomingRaces = useMemo(
@@ -123,6 +140,7 @@ const AIPage = () => {
   const simOld = roundAverage(result?.simulation?.oldAverage);
   const simNew = roundAverage(result?.simulation?.newAverage);
   const simImpact = result?.simulation?.impact;
+  const verdict = verdictForPosition(Number(roundedPredictedPosition || 20));
 
   const sliderPercent = ((simulatedPosition - 1) / 19) * 100;
 
@@ -247,14 +265,37 @@ const AIPage = () => {
 
         {result ? (
           <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+            <Card delay={0.1} className="border-accentRed/40 bg-accentRed/10">
+              <p className="text-sm text-whitePrimary leading-relaxed">
+                Based on {selectedDriverData?.name || "this driver's"} recent form and starting from{" "}
+                <span className="font-semibold">P{simulatedPosition}</span>
+                {selectedRaceData?.raceName ? ` at ${selectedRaceData.raceName}` : ""}, our models predict a{" "}
+                <span className="font-semibold">P{roundedPredictedPosition}</span> finish with{" "}
+                <span className="font-semibold">{confidencePercent}% confidence</span>.{" "}
+                {trendImproving
+                  ? "This driver is on an improving trend and looks set for a strong result."
+                  : trendDeclining
+                    ? "Recent trend is declining, so execution and strategy will be critical."
+                    : "Current trend is stable, with a result close to expected pace."}
+              </p>
+            </Card>
+
             <Card className="grid items-center gap-4 md:grid-cols-[1fr_auto]" delay={0.12}>
               <div>
                 <p className="section-label">Predicted Finish</p>
                 <p className={`mt-3 text-7xl font-bold tracking-tight ${resultColorByPosition(roundedPredictedPosition)}`}>
                   P{roundedPredictedPosition}
                 </p>
+                <span className={`inline-flex mt-3 items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${verdict.className}`}>
+                  {verdict.icon} {verdict.label}
+                </span>
               </div>
-              <ConfidenceRing percent={confidencePercent} />
+              <div className="text-center">
+                <ConfidenceRing percent={confidencePercent} />
+                <p className="mt-2 text-xs text-whiteMuted uppercase tracking-[0.2em]">
+                  {confidenceLabel(confidencePercent)}
+                </p>
+              </div>
             </Card>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -306,6 +347,13 @@ const AIPage = () => {
               </div>
               <p className="mt-4 text-sm text-whiteMuted">
                 {impactIcon(simImpact)} {formatImpact(simImpact)}
+              </p>
+              <p className="mt-2 text-sm text-whiteMuted">
+                Starting from P{simulatedPosition} instead of the current average grid context is projected to{" "}
+                {typeof simOld === "number" && typeof simNew === "number"
+                  ? `${simNew > simOld ? "cost" : "improve"} about ${Math.abs((simNew - simOld)).toFixed(1)} positions on average finish`
+                  : "have a measurable impact on average finish"}
+                {selectedDriverData?.name ? ` for ${selectedDriverData.name}` : ""}.
               </p>
             </Card>
 
