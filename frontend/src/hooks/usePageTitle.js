@@ -2,7 +2,7 @@
 
 const usePageTitle = (title) => {
   useEffect(() => {
-    document.title = `${title} | F1 Pulse`;
+    document.title = `${title} | ApexIQ`;
   }, [title]);
 };
 
