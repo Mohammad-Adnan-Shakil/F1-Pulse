@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import api from "../services/api";
-import { SkeletonLoader } from "../components/SkeletonLoader";
+import SkeletonLoader from "../components/SkeletonLoader";
 
 const TelemetryPage = () => {
   // Form state
