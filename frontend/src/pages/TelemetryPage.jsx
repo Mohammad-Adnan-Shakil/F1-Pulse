@@ -82,11 +82,13 @@ const TelemetryPage = () => {
         }
       });
 
-      if (response.data.error) {
-        setError(response.data.error);
+      const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+      
+      if (data.error) {
+        setError(data.error);
         setTelemetryData(null);
       } else {
-        setTelemetryData(response.data);
+        setTelemetryData(data);
         setError(null);
       }
     } catch (err) {

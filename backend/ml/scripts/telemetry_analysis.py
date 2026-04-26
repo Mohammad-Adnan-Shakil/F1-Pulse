@@ -15,6 +15,10 @@ import json
 import numpy as np
 import fastf1
 from typing import Optional, Dict, List, Any
+import warnings
+
+# Disable all warnings
+warnings.filterwarnings('ignore')
 
 # Disable output buffering for proper streaming when called from Java
 sys.stdout.reconfigure(line_buffering=True)
