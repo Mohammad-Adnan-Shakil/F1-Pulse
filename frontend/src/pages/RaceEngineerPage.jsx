@@ -119,15 +119,15 @@ const RaceEngineerPage = () => {
           className="mb-8"
         >
           <div className="flex items-center gap-3 mb-2">
-            <Radio className="w-8 h-8 text-red-600" />
-            <h1 className="font-display font-bold text-4xl uppercase tracking-widest text-whitePrimary">Race Engineer</h1>
+            <Radio className="w-6 h-6 sm:w-8 sm:h-8 text-red-600" />
+            <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-whitePrimary sm:text-3xl md:text-4xl">Race Engineer</h1>
           </div>
-          <p className="text-whiteMuted">AI-powered pit wall strategy — powered by DeepSeek R1</p>
+          <p className="text-xs text-whiteMuted sm:text-sm">AI-powered pit wall strategy — powered by DeepSeek R1</p>
           
           {/* Status Indicator */}
           <div className="flex items-center gap-2 mt-4">
             <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm text-green-400">ENGINEER ONLINE</span>
+            <span className="text-xs sm:text-sm text-green-400">ENGINEER ONLINE</span>
           </div>
         </motion.div>
 
@@ -344,7 +344,7 @@ const RaceEngineerPage = () => {
               )}
 
               {/* Input Area */}
-              <form onSubmit={handleTransmit} className="flex gap-2">
+              <form onSubmit={handleTransmit} className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={driverMessage}
@@ -356,7 +356,7 @@ const RaceEngineerPage = () => {
                 <button
                   type="submit"
                   disabled={loading || !driverMessage.trim()}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-red-900 text-white px-4 py-2 rounded font-semibold flex items-center gap-2 transition-colors"
+                  className="bg-red-600 hover:bg-red-700 disabled:bg-red-900 text-white px-4 py-2 rounded font-semibold flex items-center justify-center gap-2 transition-colors w-full sm:w-auto"
                 >
                   <Send className="w-4 h-4" />
                   Transmit

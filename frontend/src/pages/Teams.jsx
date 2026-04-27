@@ -59,13 +59,13 @@ const Teams = () => {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-6">
+      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-4 md:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="section-label">Team Championship</p>
             <div className="mt-2 flex items-center gap-3">
-              <Shield className="h-6 w-6 text-accentRed" />
-              <h1 className="text-3xl font-bold tracking-tight">CONSTRUCTOR STANDINGS</h1>
+              <Shield className="h-5 w-5 text-accentRed md:h-6 md:w-6" />
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">CONSTRUCTOR STANDINGS</h1>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ const Teams = () => {
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {standings.map((team, index) => {
           const isLeader = index === 0;
           const accent = isLeader ? "#ffd700" : teamColor(team.name);

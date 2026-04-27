@@ -2,7 +2,6 @@ package com.deltabox.backend.controller;
 
 import com.deltabox.backend.dto.AuthRequest;
 import com.deltabox.backend.dto.AuthResponse;
-import com.deltabox.backend.dto.GoogleAuthRequest;
 import com.deltabox.backend.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -36,15 +35,6 @@ public class AuthController {
             @Valid @RequestBody AuthRequest request) {
 
         AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
-    }
-
-    // ✅ GOOGLE OAUTH2
-    @PostMapping("/google")
-    public ResponseEntity<AuthResponse> googleAuth(
-            @Valid @RequestBody GoogleAuthRequest request) {
-
-        AuthResponse response = authService.googleAuth(request);
         return ResponseEntity.ok(response);
     }
 }   

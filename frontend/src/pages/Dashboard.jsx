@@ -43,17 +43,17 @@ const StatCard = memo(({ icon: Icon, label, value, subValue, accentClass = "text
  * paint without waiting for data, dramatically improving LCP.
  */
 const HeroSection = () => (
-  <section className="flex flex-col justify-between gap-4 rounded-xl2 border border-borderSoft bg-bgElevated p-6 md:flex-row md:items-center">
+  <section className="flex flex-col justify-between gap-4 rounded-xl2 border border-borderSoft bg-bgElevated p-4 md:flex-row md:items-center md:p-6">
     <div>
       <p className="section-label">Season Overview</p>
-      <h1 className="font-display font-bold text-4xl uppercase tracking-widest mt-2 md:text-5xl">
+      <h1 className="font-display font-bold text-2xl uppercase tracking-widest mt-2 sm:text-3xl md:text-4xl lg:text-5xl">
         <span className="text-whitePrimary">2026 SEASON</span> <span className="text-accentRed">COMMAND CENTER</span>
       </h1>
-      <p className="mt-2 text-sm text-whiteMuted">Real-time standings, race progress, and race intelligence at a glance.</p>
+      <p className="mt-2 text-xs text-whiteMuted sm:text-sm md:text-sm">Real-time standings, race progress, and race intelligence at a glance.</p>
     </div>
 
-    <div className="rounded-xl2 border border-borderSoft bg-bgCard px-4 py-3 text-right">
-      <div className="flex items-center justify-end gap-2 text-xs uppercase tracking-[0.2em] text-whiteMuted">
+    <div className="rounded-xl2 border border-borderSoft bg-bgCard px-3 py-2 text-right md:px-4 md:py-3">
+      <div className="flex items-center justify-end gap-2 text-[10px] uppercase tracking-[0.2em] text-whiteMuted sm:text-xs">
         <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-accentRed" /> LIVE
       </div>
       <LiveClock />

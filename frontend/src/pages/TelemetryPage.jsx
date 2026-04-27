@@ -124,8 +124,8 @@ const TelemetryPage = () => {
           transition={{ duration: 0.5 }}
           className="mb-8"
         >
-          <h1 className="font-display font-bold text-4xl uppercase tracking-widest text-whitePrimary mb-2">Telemetry Comparison</h1>
-          <p className="text-whiteMuted">Compare lap telemetry between two drivers</p>
+          <h1 className="font-display font-bold text-2xl uppercase tracking-widest text-whitePrimary mb-2 sm:text-3xl md:text-4xl">Telemetry Comparison</h1>
+          <p className="text-xs text-whiteMuted sm:text-sm">Compare lap telemetry between two drivers</p>
         </motion.div>
 
         {/* Control Panel */}
@@ -133,11 +133,11 @@ const TelemetryPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="bg-bgSecondary border border-red-900/30 rounded-lg p-6 mb-8"
+          className="bg-bgSecondary border border-red-900/30 rounded-lg p-4 md:p-6 mb-8"
         >
           <h2 className="font-display font-semibold text-xl uppercase tracking-wider mb-4 text-whitePrimary">Session Parameters</h2>
           
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             {/* Year */}
             <div className="flex flex-col">
               <label className="text-sm text-whiteMuted mb-2">Year</label>

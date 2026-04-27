@@ -34,15 +34,15 @@ const Races = () => {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-6">
+      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-4 md:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="section-label">Season Calendar</p>
             <div className="mt-2 flex items-center gap-3">
-              <CalendarClock className="h-6 w-6 text-accentRed" />
-              <h1 className="font-display font-bold text-4xl uppercase tracking-widest">2026 RACE CALENDAR</h1>
+              <CalendarClock className="h-5 w-5 text-accentRed md:h-6 md:w-6" />
+              <h1 className="font-display font-bold text-2xl uppercase tracking-widest sm:text-3xl md:text-4xl">2026 RACE CALENDAR</h1>
             </div>
-            <p className="mt-2 text-sm text-whiteMuted">{completed.length} completed · {scheduled.length} scheduled</p>
+            <p className="mt-2 text-xs text-whiteMuted sm:text-sm">{completed.length} completed · {scheduled.length} scheduled</p>
           </div>
 
           <input
@@ -70,7 +70,7 @@ const Races = () => {
               >
                 {isNext ? <div className="absolute inset-y-3 left-0 w-1 rounded-r bg-accentRed" /> : null}
 
-                <div className="grid grid-cols-[64px_1fr_auto] items-center gap-4">
+                <div className="grid grid-cols-[64px_1fr] items-center gap-4 sm:grid-cols-[64px_1fr_auto]">
                   <div
                     className={`font-display font-bold uppercase tracking-wide flex h-12 w-12 items-center justify-center rounded-full border text-sm font-semibold ${
                       isCompleted
@@ -82,7 +82,7 @@ const Races = () => {
                   </div>
 
                   <div>
-                    <h2 className="text-xl font-semibold text-whitePrimary">{race.raceName}</h2>
+                    <h2 className="text-lg font-semibold text-whitePrimary sm:text-xl">{race.raceName}</h2>
                     <p className="text-sm text-whiteMuted">{race.circuitName}</p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-whiteMuted">
                       <MapPin className="h-3.5 w-3.5" /> {race.location}, {race.country}

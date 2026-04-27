@@ -48,19 +48,19 @@ const Drivers = () => {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-6">
+      <section className="rounded-xl2 border border-borderSoft bg-bgElevated p-4 md:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="section-label">Championship</p>
             <div className="mt-2 flex items-center gap-3">
-              <svg viewBox="0 0 64 24" className="h-6 w-14 text-accentRed" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg viewBox="0 0 64 24" className="h-5 w-12 text-accentRed md:h-6 md:w-14" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M2 18H16L24 10H40L47 18H62" />
                 <circle cx="14" cy="18" r="3" />
                 <circle cx="49" cy="18" r="3" />
               </svg>
-              <h1 className="font-display font-bold text-4xl uppercase tracking-widest">DRIVER STANDINGS</h1>
+              <h1 className="font-display font-bold text-2xl uppercase tracking-widest sm:text-3xl md:text-4xl">DRIVER STANDINGS</h1>
             </div>
-            <p className="mt-2 text-sm text-whiteMuted">{drivers.length} drivers · 2026 season</p>
+            <p className="mt-2 text-xs text-whiteMuted sm:text-sm">{drivers.length} drivers · 2026 season</p>
           </div>
 
           <div className="grid w-full grid-cols-1 gap-3 md:w-auto md:grid-cols-[280px_170px]">

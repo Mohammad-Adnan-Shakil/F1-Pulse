@@ -59,18 +59,18 @@ const Profile = () => {
   return (
     <div className="space-y-6">
       <Card className="bg-gradient-to-r from-accentRed/10 to-bgElevated" delay={0.05}>
-        <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-accentRed text-3xl font-bold text-white">
+        <div className="flex flex-col items-start gap-4 p-4 md:flex-row md:items-center md:p-6">
+          <div className="flex h-[60px] w-[60px] md:h-[72px] md:w-[72px] items-center justify-center rounded-full bg-accentRed text-2xl md:text-3xl font-bold text-white">
             {username[0]?.toUpperCase() || "U"}
           </div>
 
           <div>
             <p className="section-label">Member Profile</p>
-            <h1 className="mt-1 text-3xl font-display font-bold uppercase tracking-wide">{username}</h1>
-            <p className="mt-1 text-sm text-whiteMuted">{email}</p>
+            <h1 className="mt-1 text-2xl font-display font-bold uppercase tracking-wide sm:text-3xl">{username}</h1>
+            <p className="mt-1 text-xs text-whiteMuted sm:text-sm">{email}</p>
             <div className="mt-2 flex items-center gap-2">
               <span className="rounded-full bg-accentRed/20 px-3 py-1 text-xs font-semibold text-accentRed">{role}</span>
-              <span className="text-sm text-whiteMuted">Member · DeltaBox 2026</span>
+              <span className="text-xs text-whiteMuted sm:text-sm">Member · DeltaBox 2026</span>
             </div>
           </div>
         </div>
@@ -79,17 +79,17 @@ const Profile = () => {
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card delay={0.1}>
           <div className="mb-3 flex items-center gap-2 text-accentRed"><Users className="h-4 w-4" /><span className="section-label">Drivers Loaded</span></div>
-          <p className="font-mono hero-number text-[52px]">{driverList.length}</p>
+          <p className="font-mono hero-number text-[42px] sm:text-[52px]">{driverList.length}</p>
         </Card>
 
         <Card delay={0.15}>
           <div className="mb-3 flex items-center gap-2 text-accentRed"><Flag className="h-4 w-4" /><span className="section-label">Completed Races</span></div>
-          <p className="font-mono hero-number text-[52px] text-successGreen">{completedRaces}</p>
+          <p className="font-mono hero-number text-[42px] sm:text-[52px] text-successGreen">{completedRaces}</p>
         </Card>
 
         <Card delay={0.2}>
           <div className="mb-3 flex items-center gap-2 text-accentRed"><Calendar className="h-4 w-4" /><span className="section-label">Upcoming Rounds</span></div>
-          <p className="font-mono hero-number text-[52px]">{upcomingRaces}</p>
+          <p className="font-mono hero-number text-[42px] sm:text-[52px]">{upcomingRaces}</p>
         </Card>
       </section>
 
