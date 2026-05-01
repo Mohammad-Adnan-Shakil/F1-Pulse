@@ -96,8 +96,14 @@ public class SyncService {
                 drivers.add(driver);
             }
 
-            updateSyncTime(key);
-            return driverRepository.saveAll(drivers);
+            // Only save if database is empty to prevent duplicates
+            if (driverRepository.count() == 0) {
+                updateSyncTime(key);
+                return driverRepository.saveAll(drivers);
+            } else {
+                log.info("Drivers already exist, skipping sync");
+                return driverRepository.findAll();
+            }
 
         } catch (Exception e) {
             log.error("Error syncing drivers", e);
@@ -127,8 +133,14 @@ public class SyncService {
                 teams.add(team);
             }
 
-            updateSyncTime(key);
-            return teamRepository.saveAll(teams);
+            // Only save if database is empty to prevent duplicates
+            if (teamRepository.count() == 0) {
+                updateSyncTime(key);
+                return teamRepository.saveAll(teams);
+            } else {
+                log.info("Teams already exist, skipping sync");
+                return teamRepository.findAll();
+            }
 
         } catch (Exception e) {
             log.error("Error syncing teams", e);
@@ -205,10 +217,17 @@ public class SyncService {
                 }
             }
 
-            raceRepository.deleteAllInBatch();
-            List<Race> saved = raceRepository.saveAll(rowsToPersist);
-            deduplicateScheduleRows(CURRENT_SEASON);
-            updateSyncTime(key);
+            // Only save if database is empty to prevent duplicates
+            List<Race> saved;
+            if (raceRepository.count() == 0) {
+                raceRepository.deleteAllInBatch();
+                saved = raceRepository.saveAll(rowsToPersist);
+                deduplicateScheduleRows(CURRENT_SEASON);
+                updateSyncTime(key);
+            } else {
+                log.info("Races already exist, skipping sync");
+                saved = raceRepository.findBySeasonAndDriverIdIsNullOrderByDateAsc(CURRENT_SEASON);
+            }
             return saved.stream()
                     .filter(r -> r.getDriverId() == null)
                     .sorted(Comparator.comparing(r -> Objects.requireNonNullElse(r.getRound(), Integer.MAX_VALUE)))
