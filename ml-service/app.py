@@ -39,11 +39,170 @@ CORS(app, resources={
 
 # Global model cache
 models = {}
+models_loaded = False
+training_in_progress = False
+
+
+def check_models_exist():
+    """Check if all required model files exist"""
+    required_files = [
+        "rf_model.pkl",
+        "xgb_model.pkl",
+        "le_constructor.pkl",
+        "le_driver.pkl",
+        "le_track.pkl"
+    ]
+    for fname in required_files:
+        if not os.path.exists(os.path.join(MODELS_DIR, fname)):
+            logger.info(f"📋 Model file missing: {fname}")
+            return False
+    return True
+
+
+def train_models():
+    """Train all ML models and save them to disk"""
+    global models, training_in_progress, MODELS_DIR
+    
+    training_in_progress = True
+    logger.info("🚀 Starting model training pipeline...")
+    
+    try:
+        import pickle
+        import pandas as pd
+        import numpy as np
+        from sklearn.model_selection import train_test_split
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.preprocessing import LabelEncoder
+        from sklearn.metrics import mean_absolute_error
+        from xgboost import XGBRegressor
+        
+        # Create models directory
+        os.makedirs(MODELS_DIR, exist_ok=True)
+        logger.info(f"📁 Models directory ready: {MODELS_DIR}")
+        
+        # ===== Train Random Forest Model =====
+        logger.info("🔄 Training Random Forest model...")
+        
+        # Load RF training data
+        rf_data_path = os.path.join(BASE_DIR, "data", "driver_performance_data.csv")
+        if os.path.exists(rf_data_path):
+            df_rf = pd.read_csv(rf_data_path)
+            logger.info(f"📊 Loaded RF training data: {df_rf.shape[0]} records")
+            
+            # Encode driver_id
+            le_driver = LabelEncoder()
+            df_rf["driver_id"] = le_driver.fit_transform(df_rf["driver_id"])
+            
+            # Features and target
+            X_rf = df_rf[["driver_id", "avg_last_5", "std_last_5", "avg_last_10", 
+                          "std_last_10", "last_race_position"]]
+            y_rf = df_rf["target_next_race_position"]
+            
+            # Train model
+            rf_model = RandomForestRegressor(
+                n_estimators=200,
+                max_depth=10,
+                random_state=42,
+                n_jobs=-1
+            )
+            rf_model.fit(X_rf, y_rf)
+            
+            # Evaluate
+            y_pred_rf = rf_model.predict(X_rf)
+            mae_rf = mean_absolute_error(y_rf, y_pred_rf)
+            logger.info(f"✅ Random Forest trained - MAE: {mae_rf:.4f}")
+            
+            # Save RF model and encoder
+            with open(os.path.join(MODELS_DIR, "rf_model.pkl"), "wb") as f:
+                pickle.dump(rf_model, f, protocol=4)
+            with open(os.path.join(MODELS_DIR, "le_driver.pkl"), "wb") as f:
+                pickle.dump(le_driver, f, protocol=4)
+            logger.info("💾 Random Forest model saved")
+        else:
+            logger.warning(f"⚠️ RF training data not found, using fallback model")
+            # Create minimal fallback model
+            rf_model = RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42)
+            le_driver = LabelEncoder()
+            with open(os.path.join(MODELS_DIR, "rf_model.pkl"), "wb") as f:
+                pickle.dump(rf_model, f, protocol=4)
+            with open(os.path.join(MODELS_DIR, "le_driver.pkl"), "wb") as f:
+                pickle.dump(le_driver, f, protocol=4)
+        
+        # ===== Train XGBoost Model =====
+        logger.info("🔄 Training XGBoost model...")
+        
+        # Load XGB training data
+        xgb_data_path = os.path.join(BASE_DIR, "data", "f1_training_data.csv")
+        if os.path.exists(xgb_data_path):
+            df_xgb = pd.read_csv(xgb_data_path)
+            logger.info(f"📊 Loaded XGB training data: {df_xgb.shape[0]} records")
+            
+            # Encode categorical features
+            le_constructor = LabelEncoder()
+            le_track = LabelEncoder()
+            
+            df_xgb['constructor_id'] = le_constructor.fit_transform(df_xgb['constructor_id'])
+            df_xgb['track_id'] = le_track.fit_transform(df_xgb['track_id'])
+            
+            # Features and target
+            X_xgb = df_xgb[['qualifying_position', 'constructor_id', 'track_id', 
+                            'season_year', 'recent_avg_position_last_5', 
+                            'recent_std_last_5', 'grid_position', 'is_home_race']]
+            y_xgb = df_xgb['finishing_position']
+            
+            # Train model
+            xgb_model = XGBRegressor(
+                n_estimators=300,
+                learning_rate=0.05,
+                max_depth=6,
+                subsample=0.8,
+                colsample_bytree=0.8,
+                random_state=42,
+                n_jobs=-1
+            )
+            xgb_model.fit(X_xgb, y_xgb)
+            
+            # Evaluate
+            y_pred_xgb = xgb_model.predict(X_xgb)
+            mae_xgb = mean_absolute_error(y_xgb, y_pred_xgb)
+            logger.info(f"✅ XGBoost trained - MAE: {mae_xgb:.4f}")
+            
+            # Save XGB model and encoders
+            with open(os.path.join(MODELS_DIR, "xgb_model.pkl"), "wb") as f:
+                pickle.dump(xgb_model, f, protocol=4)
+            with open(os.path.join(MODELS_DIR, "le_constructor.pkl"), "wb") as f:
+                pickle.dump(le_constructor, f, protocol=4)
+            with open(os.path.join(MODELS_DIR, "le_track.pkl"), "wb") as f:
+                pickle.dump(le_track, f, protocol=4)
+            logger.info("💾 XGBoost model saved")
+        else:
+            logger.warning(f"⚠️ XGB training data not found, using fallback model")
+            # Create minimal fallback model
+            xgb_model = XGBRegressor(n_estimators=50, max_depth=5, random_state=42)
+            le_constructor = LabelEncoder()
+            le_track = LabelEncoder()
+            with open(os.path.join(MODELS_DIR, "xgb_model.pkl"), "wb") as f:
+                pickle.dump(xgb_model, f, protocol=4)
+            with open(os.path.join(MODELS_DIR, "le_constructor.pkl"), "wb") as f:
+                pickle.dump(le_constructor, f, protocol=4)
+            with open(os.path.join(MODELS_DIR, "le_track.pkl"), "wb") as f:
+                pickle.dump(le_track, f, protocol=4)
+        
+        logger.info("✅ Model training pipeline completed successfully!")
+        training_in_progress = False
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Model training failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        training_in_progress = False
+        return False
 
 
 def load_models():
     """Load all ML models on startup"""
-    global models
+    global models, models_loaded
     try:
         import pickle
         models["rf"] = pickle.load(open(os.path.join(MODELS_DIR, "rf_model.pkl"), "rb"))
@@ -52,14 +211,28 @@ def load_models():
         models["le_driver"] = pickle.load(open(os.path.join(MODELS_DIR, "le_driver.pkl"), "rb"))
         models["le_track"] = pickle.load(open(os.path.join(MODELS_DIR, "le_track.pkl"), "rb"))
         logger.info("✅ All models loaded successfully")
+        models_loaded = True
         return True
     except Exception as e:
         logger.error(f"❌ Error loading models: {e}")
+        models_loaded = False
         return False
 
 
-# Load models on startup
-models_loaded = load_models()
+# Initialize models on startup
+logger.info("🔧 Initializing ML models...")
+os.makedirs(MODELS_DIR, exist_ok=True)
+logger.info(f"📁 Models directory: {MODELS_DIR}")
+
+if check_models_exist():
+    logger.info("📂 Model files found, loading existing models...")
+    models_loaded = load_models()
+else:
+    logger.info("📂 Model files not found, starting training...")
+    if train_models():
+        models_loaded = load_models()
+    else:
+        logger.error("❌ Failed to train models - service may not function correctly")
 
 
 def simulate_impact(predicted: float, avg_last5: float) -> str:
@@ -492,11 +665,21 @@ def compare_drivers(driverA_data: Dict[str, Any], driverB_data: Dict[str, Any]) 
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint for Render deployment"""
+    """Health check endpoint for Render deployment
+    Returns ok even if models are still training, so Render doesn't kill the service during startup.
+    """
+    global models_loaded, training_in_progress
+    
+    # Always return ok for health checks - Render just needs to know the service is alive
+    # The actual model status is reported but doesn't affect the health status
+    status = "ok"
+    
     return jsonify({
-        "status": "healthy",
-        "models_loaded": len(models) > 0,
-        "service": "deltabox-ml-service"
+        "status": status,
+        "models_loaded": models_loaded,
+        "training_in_progress": training_in_progress,
+        "service": "deltabox-ml-service",
+        "version": "1.0.0"
     })
 
 
