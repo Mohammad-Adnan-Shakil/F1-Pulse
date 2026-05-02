@@ -2,6 +2,7 @@ package com.f1pulse.backend.security;
 
 import com.f1pulse.backend.model.User;
 import com.f1pulse.backend.repository.UserRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 
 @Service
+@ConditionalOnProperty(name = "security.enabled", havingValue = "true", matchIfMissing = true)
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
