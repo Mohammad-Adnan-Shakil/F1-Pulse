@@ -122,9 +122,11 @@ def train_models():
             logger.warning(f"⚠️ RF training data not found, using fallback model")
             # Create fitted fallback model with synthetic data
             import numpy as np
-            X_dummy = np.random.rand(100, 6)  # 6 features: driver_id, avg_last_5, std_last_5, avg_last_10, std_last_10, last_race_position
-            y_dummy = np.random.rand(100) * 20  # Target positions 1-20
-            rf_model = RandomForestRegressor(n_estimators=50, max_depth=5, random_state=42)
+            # Exact same 6 features as used in predict_rf function
+            n_features = 6
+            X_dummy = np.random.rand(200, n_features)  # 200 samples, 6 features
+            y_dummy = np.random.rand(200) * 20  # Target positions 1-20
+            rf_model = RandomForestRegressor(n_estimators=50, random_state=42)
             rf_model.fit(X_dummy, y_dummy)
             le_driver = LabelEncoder()
             # Fit the encoder with some dummy values
@@ -133,6 +135,7 @@ def train_models():
                 pickle.dump(rf_model, f, protocol=4)
             with open(os.path.join(MODELS_DIR, "le_driver.pkl"), "wb") as f:
                 pickle.dump(le_driver, f, protocol=4)
+            logger.info("✅ RF fallback model trained and saved")
         
         # ===== Train XGBoost Model =====
         logger.info("🔄 Training XGBoost model...")
@@ -185,9 +188,11 @@ def train_models():
             logger.warning(f"⚠️ XGB training data not found, using fallback model")
             # Create fitted fallback model with synthetic data
             import numpy as np
-            X_dummy = np.random.rand(100, 8)  # 8 features: qualifying_position, constructor_id, track_id, season_year, recent_avg_position_last_5, recent_std_last_5, grid_position, is_home_race
-            y_dummy = np.random.rand(100) * 20  # Target positions 1-20
-            xgb_model = XGBRegressor(n_estimators=50, max_depth=5, random_state=42)
+            # Exact same 8 features as used in predict_xgb function
+            n_features = 8
+            X_dummy = np.random.rand(200, n_features)  # 200 samples, 8 features
+            y_dummy = np.random.rand(200) * 20  # Target positions 1-20
+            xgb_model = XGBRegressor(n_estimators=50, random_state=42)
             xgb_model.fit(X_dummy, y_dummy)
             le_constructor = LabelEncoder()
             le_track = LabelEncoder()
@@ -200,6 +205,7 @@ def train_models():
                 pickle.dump(le_constructor, f, protocol=4)
             with open(os.path.join(MODELS_DIR, "le_track.pkl"), "wb") as f:
                 pickle.dump(le_track, f, protocol=4)
+            logger.info("✅ XGBoost fallback model trained and saved")
         
         logger.info("✅ Model training pipeline completed successfully!")
         training_in_progress = False

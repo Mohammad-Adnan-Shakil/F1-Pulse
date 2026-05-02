@@ -23,7 +23,7 @@ public class RaceEngineerService {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(RaceEngineerService.class);
 
-    @Value("${groq.api.key}")
+    @Value("${GROQ_API_KEY:}")
     private String apiKey;
 
     @Value("${groq.api.url}")
@@ -53,6 +53,14 @@ public class RaceEngineerService {
         log.info("📡 [RaceEngineer] Processing context: Lap {}/{}, P{}, {}s gap, {} tires (age {})",
                 context.getLap(), context.getTotalLaps(), context.getPosition(),
                 context.getGapToLeader(), context.getTyreCompound(), context.getTyreAge());
+
+        // Check if API key is available
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            log.warn("⚠️ [RaceEngineer] GROQ_API_KEY not configured, returning fallback response");
+            Map<String, String> fallback = new HashMap<>();
+            fallback.put("response", "Race Engineer service is currently unavailable. Please check your tire wear and fuel load for strategic decisions.");
+            return fallback;
+        }
 
         try {
             // Build system prompt
@@ -122,10 +130,14 @@ public class RaceEngineerService {
 
         } catch (RestClientException e) {
             log.error("❌ [RaceEngineer] Groq API error: {}", e.getMessage(), e);
-            throw new PythonExecutionException("Groq API communication failed: " + e.getMessage(), e);
+            Map<String, String> fallback = new HashMap<>();
+            fallback.put("response", "Race Engineer service temporarily unavailable. Monitor tire temperatures and fuel consumption for optimal strategy.");
+            return fallback;
         } catch (Exception e) {
             log.error("❌ [RaceEngineer] Unexpected error: {}", e.getMessage(), e);
-            throw new PythonExecutionException("Failed to generate race engineer advice: " + e.getMessage(), e);
+            Map<String, String> fallback = new HashMap<>();
+            fallback.put("response", "Race Engineer service experiencing technical difficulties. Use standard pit strategy guidelines.");
+            return fallback;
         }
     }
 

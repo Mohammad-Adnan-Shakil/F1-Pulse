@@ -91,10 +91,11 @@ public class TelemetryController {
 
         } catch (Exception e) {
             log.error("❌ [TelemetryController] Error calling ML service: {}", e.getMessage(), e);
+            // Return 200 with fallback message instead of 500 error
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .status(HttpStatus.OK)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"error\":\"Failed to call ML service: " + e.getMessage() + "\"}");
+                    .body("{\"error\":\"Telemetry service temporarily unavailable. Please try again later.\",\"status\":\"unavailable\"}");
         }
     }
 }
