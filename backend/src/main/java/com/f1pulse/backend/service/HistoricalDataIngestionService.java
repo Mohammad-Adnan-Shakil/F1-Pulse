@@ -3,6 +3,7 @@ package com.f1pulse.backend.service;
 import com.f1pulse.backend.model.*;
 import com.f1pulse.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Fetches data for seasons 1950-2026 and stores in database
  */
 @Service
+@ConditionalOnProperty(name = "security.enabled", havingValue = "true", matchIfMissing = true)
 public class HistoricalDataIngestionService {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(HistoricalDataIngestionService.class);
