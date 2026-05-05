@@ -107,5 +107,6 @@ com\f1pulse\backend\service\F1ApiClient.class
 com\f1pulse\backend\exception\UserNotFoundException.class
 com\f1pulse\backend\dto\GoogleAuthRequest.class
 com\f1pulse\backend\service\AuthService.class
+com\f1pulse\backend\config\DatasourceLoggingConfig.class
 com\f1pulse\backend\repository\HistoricalResultRepository.class
 com\f1pulse\backend\ai\dto\RaceContextRequest.class

@@ -102,6 +102,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\Driver
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\util\PythonExecutor.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\MultiSimulationRequestDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\SimulationResponseDTO.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\config\DatasourceLoggingConfig.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\PredictionResponseDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\RaceController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\HistoricalDataIngestionService.java
