@@ -31,7 +31,6 @@ com\f1pulse\backend\model\HistoricalSeason.class
 com\f1pulse\backend\repository\HistoricalDriverRepository.class
 com\f1pulse\backend\dto\UserResponse.class
 com\f1pulse\backend\dto\DriverComparisonRequest.class
-com\f1pulse\backend\config\DatabaseConfig.class
 com\f1pulse\backend\exception\UserAlreadyExistsException.class
 com\f1pulse\backend\ai\service\RaceEngineerService.class
 com\f1pulse\backend\ai\service\PredictionServiceImpl.class
