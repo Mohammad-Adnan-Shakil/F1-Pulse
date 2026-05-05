@@ -8,6 +8,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\FavoriteDrive
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\AuthController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\DriverInsightsService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\util\StatsUtil.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\controller\DeltaAnalystController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\model\HistoricalDriver.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\AdminIngestionController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\config\AsyncConfig.java
@@ -23,6 +24,8 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\TeamCo
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\HealthController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\util\StatsUtil.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\HistoricalController.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\DeltaAnalystService.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\TelemetryAnalysisRequest.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\HistoricalConstructorStandingsRepository.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\GoogleAuthRequest.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\MLClientService.java

@@ -24,6 +24,7 @@ com\f1pulse\backend\service\HistoricalDataIngestionService$IngestionProgress.cla
 com\f1pulse\backend\ai\service\PredictionService.class
 com\f1pulse\backend\controller\RaceController.class
 com\f1pulse\backend\dto\DriverComparisonResponse$DriverComparison.class
+com\f1pulse\backend\dto\TelemetryAnalysisRequest.class
 com\f1pulse\backend\exception\ErrorResponse.class
 com\f1pulse\backend\dto\FavoriteDriverRequest.class
 com\f1pulse\CorsConfig.class
@@ -74,12 +75,14 @@ com\f1pulse\backend\dto\PodiumDriverDTO.class
 com\f1pulse\backend\config\AppConfig.class
 com\f1pulse\backend\service\HistoricalDataIngestionService.class
 com\f1pulse\backend\ai\controller\RaceEngineerController.class
+com\f1pulse\backend\ai\service\DeltaAnalystService.class
 com\f1pulse\backend\model\HistoricalResult.class
 com\f1pulse\backend\service\SyncScheduler.class
 com\f1pulse\backend\model\HistoricalConstructorStandings.class
 com\f1pulse\backend\model\RaceResultDTO.class
 com\f1pulse\backend\model\Team.class
 com\f1pulse\backend\ai\dto\DriverComparisonResponseDTO.class
+com\f1pulse\backend\ai\controller\DeltaAnalystController$TelemetryContext.class
 com\f1pulse\backend\model\HistoricalConstructor.class
 com\f1pulse\backend\service\AIService.class
 com\f1pulse\backend\ai\dto\MultiSimulationResponseDTO.class
@@ -112,3 +115,4 @@ com\f1pulse\backend\service\AuthService.class
 com\f1pulse\backend\config\DatasourceLoggingConfig.class
 com\f1pulse\backend\repository\HistoricalResultRepository.class
 com\f1pulse\backend\ai\dto\RaceContextRequest.class
+com\f1pulse\backend\ai\controller\DeltaAnalystController.class
