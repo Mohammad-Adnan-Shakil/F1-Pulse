@@ -650,7 +650,7 @@ public class HistoricalDataIngestionService {
 
             // Create or update qualifying result
             com.f1pulse.backend.model.HistoricalQualifying qualifying = 
-                    qualifyingRepository.findByRaceIdAndDriverId(race.getId(), historicalDriver.getId())
+                    qualifyingRepository.findByIdAndDriverId(race.getId(), historicalDriver.getId())
                     .orElse(new com.f1pulse.backend.model.HistoricalQualifying());
 
             qualifying.setRaceId(race.getId());
