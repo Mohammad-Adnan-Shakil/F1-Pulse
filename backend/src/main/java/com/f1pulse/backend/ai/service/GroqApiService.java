@@ -22,7 +22,7 @@ public class GroqApiService {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GroqApiService.class);
 
-    @Value("${GROQ_API_KEY:}")
+    @Value("${groq.api.key:${GROQ_API_KEY:}}")
     private String apiKey;
 
     @Value("${groq.api.url:https://api.groq.com/openai/v1/chat/completions}")

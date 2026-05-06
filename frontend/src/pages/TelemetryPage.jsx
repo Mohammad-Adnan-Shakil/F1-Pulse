@@ -432,7 +432,7 @@ const TelemetryPage = () => {
       </div>
     
     {/* Telemetry Chatbot */}
-    <TelemetryChatbot />
+    <TelemetryChatbot telemetryData={telemetryData} selectedDrivers={formData} />
     </div>
   );
 };

@@ -76,6 +76,11 @@ public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
             logger.error("User not found during profile update: {}", e.getMessage());
             return ResponseEntity.status(404)
                     .body(new ApiResponse<>(false, "User not found", null));
+
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid profile update request: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, e.getMessage(), null));
                     
         } catch (Exception e) {
             logger.error("Error updating profile: {}", e.getMessage(), e);
@@ -108,6 +113,11 @@ public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
             logger.error("User not found during favorite driver update: {}", e.getMessage());
             return ResponseEntity.status(404)
                     .body(new ApiResponse<>(false, "User not found", null));
+
+        } catch (IllegalArgumentException e) {
+            logger.warn("Invalid favorite driver update request: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new ApiResponse<>(false, e.getMessage(), null));
                     
         } catch (Exception e) {
             logger.error("Error updating favorite driver: {}", e.getMessage(), e);

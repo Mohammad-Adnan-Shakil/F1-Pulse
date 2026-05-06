@@ -23,8 +23,9 @@ const Profile = () => {
     const loadFavoriteDriver = async () => {
       try {
         const response = await api.get("/user/profile");
-        if (response.data?.favouriteDriver) {
-          setFavouriteDriverId(response.data.favouriteDriver);
+        const profile = response.data?.data || response.data;
+        if (profile?.favoriteDriver) {
+          setFavouriteDriverId(profile.favoriteDriver);
         }
       } catch (error) {
         console.log("No saved favorite driver found");
@@ -40,12 +41,12 @@ const Profile = () => {
   const updateFavoriteDriver = async (driverId) => {
     setIsUpdating(true);
     try {
-      await api.put("/user/profile", { favouriteDriver: driverId });
-      setFavouriteDriverId(driverId);
+      const normalizedDriverId = driverId || null;
+      const response = await api.put("/user/profile", { favoriteDriver: normalizedDriverId });
+      const profile = response.data?.data || response.data;
+      setFavouriteDriverId(profile?.favoriteDriver || "");
     } catch (error) {
       console.error("Failed to update favorite driver:", error);
-      // Fallback to localStorage if backend fails
-      setFavouriteDriverId(driverId);
     } finally {
       setIsUpdating(false);
     }
@@ -182,4 +183,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

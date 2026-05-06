@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.LinkedHashMap;
@@ -187,10 +188,15 @@ public class MLClientService {
     public Map<String, Object> analyzeTelemetry(int year, String grandPrix, String sessionType, 
                                                   String driver1, String driver2) {
         try {
-            String url = String.format(
-                "%s/telemetry?year=%d&grand_prix=%s&session_type=%s&driver1=%s&driver2=%s",
-                mlServiceUrl, year, grandPrix, sessionType, driver1, driver2
-            );
+            String url = UriComponentsBuilder.fromHttpUrl(mlServiceUrl + "/telemetry")
+                    .queryParam("year", year)
+                    .queryParam("grand_prix", grandPrix)
+                    .queryParam("session_type", sessionType)
+                    .queryParam("driver1", driver1)
+                    .queryParam("driver2", driver2)
+                    .build()
+                    .encode()
+                    .toUriString();
             
             log.info("Calling ML service telemetry endpoint at: {}", url);
             ResponseEntity<Map> response = restTemplate.exchange(

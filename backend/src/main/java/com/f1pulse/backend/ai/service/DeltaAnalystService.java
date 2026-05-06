@@ -1,6 +1,9 @@
 package com.f1pulse.backend.ai.service;
 
+import com.f1pulse.backend.ai.dto.DeltaAnalystChatRequest;
 import com.f1pulse.backend.ai.prompts.DeltaAnalystPrompts;
+import com.f1pulse.backend.ai.telemetry.TelemetryPromptContext;
+import com.f1pulse.backend.ai.util.AiResponseFormatter;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,20 +17,22 @@ public class DeltaAnalystService {
         this.groqApiService = groqApiService;
     }
 
-    public String analyzeTelemetry(String userQuestion, Object telemetryContext) {
+    public String analyzeTelemetry(DeltaAnalystChatRequest request) {
         try {
-            log.info("Delta Analyst service processing telemetry analysis: {}", userQuestion);
+            log.info("Delta Analyst service processing telemetry analysis: {}", request.getUserMessage());
             
-            // Build prompts using the new prompt utility
             String systemPrompt = DeltaAnalystPrompts.DELTA_ANALYST_SYSTEM_PROMPT;
-            String userPrompt = DeltaAnalystPrompts.buildUserPrompt(userQuestion, telemetryContext.toString());
+            String telemetryContext = new TelemetryPromptContext(request).toPromptText();
+            String userPrompt = DeltaAnalystPrompts.buildUserPrompt(request.getUserMessage(), telemetryContext);
             
-            // Make request using the shared Groq API service
-            return groqApiService.makeRequest(systemPrompt, userPrompt, 300, 0.3);
+            String response = groqApiService.makeRequest(systemPrompt, userPrompt, 350, 0.25);
+            return AiResponseFormatter.isUnavailable(response)
+                    ? AiResponseFormatter.deltaAnalystUnavailable()
+                    : response;
             
         } catch (Exception e) {
             log.error("Unexpected error in Delta Analyst service: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
-            return "Delta Analyst temporarily unavailable.";
+            return AiResponseFormatter.deltaAnalystUnavailable();
         }
     }
 }

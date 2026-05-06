@@ -1,37 +1,80 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Bot } from "lucide-react";
+import { MessageCircle, X, Send, Bot, AlertCircle } from "lucide-react";
+import api from "../services/api";
 
-const TelemetryChatbot = () => {
+const toNumberList = (values = []) =>
+  values
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value));
+
+const toIntegerList = (values = []) =>
+  values
+    .map((value) => Number.parseInt(value, 10))
+    .filter((value) => Number.isFinite(value));
+
+const hasTelemetry = (telemetryData) =>
+  Array.isArray(telemetryData?.driver1_speed) &&
+  Array.isArray(telemetryData?.driver2_speed) &&
+  telemetryData.driver1_speed.length > 0 &&
+  telemetryData.driver2_speed.length > 0;
+
+const buildTelemetryPayload = (telemetryData, selectedDrivers, userMessage) => ({
+  driver1: selectedDrivers.driver1,
+  driver2: selectedDrivers.driver2,
+  speedData: {
+    [selectedDrivers.driver1]: toNumberList(telemetryData?.driver1_speed),
+    [selectedDrivers.driver2]: toNumberList(telemetryData?.driver2_speed)
+  },
+  throttleData: {
+    [selectedDrivers.driver1]: toNumberList(telemetryData?.driver1_throttle),
+    [selectedDrivers.driver2]: toNumberList(telemetryData?.driver2_throttle)
+  },
+  brakeData: {
+    [selectedDrivers.driver1]: toNumberList(telemetryData?.driver1_brake),
+    [selectedDrivers.driver2]: toNumberList(telemetryData?.driver2_brake)
+  },
+  gearData: {
+    [selectedDrivers.driver1]: toIntegerList(telemetryData?.driver1_gear),
+    [selectedDrivers.driver2]: toIntegerList(telemetryData?.driver2_gear)
+  },
+  sectorDelta: toNumberList(telemetryData?.delta),
+  userMessage
+});
+
+const TelemetryChatbot = ({ telemetryData, selectedDrivers }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
+  const telemetryReady = hasTelemetry(telemetryData);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Add welcome message when chat opens for the first time
-      const welcomeMessage = {
-        id: Date.now(),
-        sender: "bot",
-        text: "🏁 Welcome to DeltaBox Telemetry Assistant! I can help you analyze driver performance, compare telemetry data, and provide insights about racing metrics. What would you like to know?",
-        timestamp: new Date()
-      };
-      setMessages([welcomeMessage]);
+      setMessages([
+        {
+          id: Date.now(),
+          sender: "bot",
+          text: "Delta Analyst is ready. Ask a telemetry question after loading a driver comparison.",
+          timestamp: new Date()
+        }
+      ]);
     }
   }, [isOpen, messages.length]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [messages, isTyping]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isTyping || !telemetryReady) {
+      if (!telemetryReady) {
+        setError("Load telemetry before asking Delta Analyst.");
+      }
+      return;
+    }
 
     const userMessage = {
       id: Date.now(),
@@ -40,40 +83,46 @@ const TelemetryChatbot = () => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setIsTyping(true);
+    setError(null);
 
-    // Simulate bot response (mock API integration)
-    setTimeout(() => {
-      const botResponse = generateBotResponse(userMessage.text);
-      setMessages(prev => [...prev, botResponse]);
+    try {
+      const response = await api.post(
+        "/ai/delta-analyst/chat",
+        buildTelemetryPayload(telemetryData, selectedDrivers, userMessage.text)
+      );
+
+      const aiText = response.data?.data || response.data?.response;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: aiText || "Delta Analyst temporarily unavailable.",
+          timestamp: new Date()
+        }
+      ]);
+    } catch (err) {
+      console.error("Delta Analyst API error:", err);
+      setError("Failed to connect to Delta Analyst");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: "bot",
+          text: "Delta Analyst temporarily unavailable.",
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1000 + Math.random() * 1000);
+    }
   };
 
-  const generateBotResponse = (userInput) => {
-    const responses = [
-      "Based on the telemetry data, I can see that driver performance varies significantly through different corners of the circuit.",
-      "The throttle application patterns suggest this driver is more aggressive on corner exit, which could explain the faster lap times.",
-      "Braking points appear consistent, but there's room for improvement in the final sector.",
-      "The speed trace shows good momentum through the high-speed sections, which is crucial for this circuit.",
-      "Gear selection looks optimal for the chosen racing line. The driver is maximizing the power band effectively.",
-      "The telemetry indicates slight understeer in mid-corner, which could be addressed with setup adjustments."
-    ];
-
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-    
-    return {
-      id: Date.now() + 1,
-      sender: "bot",
-      text: randomResponse,
-      timestamp: new Date()
-    };
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
@@ -81,7 +130,6 @@ const TelemetryChatbot = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
-      {/* Chat Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -91,14 +139,14 @@ const TelemetryChatbot = () => {
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => setIsOpen(true)}
-            className="bg-accentRed hover:bg-red-500 text-white rounded-full p-3 shadow-lg shadow-red-900/30 transition-all duration-200"
+            className="rounded-full bg-accentRed p-3 text-white shadow-lg shadow-red-900/30 transition-all duration-200 hover:bg-red-500"
+            aria-label="Open Delta Analyst"
           >
             <MessageCircle className="h-6 w-6" />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -106,60 +154,58 @@ const TelemetryChatbot = () => {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.8, opacity: 0, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="bg-bgElevated border border-borderSoft rounded-xl2 shadow-2xl shadow-black/50 w-80 h-96 flex flex-col"
+            className="flex h-[28rem] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] flex-col rounded-xl2 border border-borderSoft bg-bgElevated shadow-2xl shadow-black/50 sm:w-96"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-borderSoft">
+            <div className="flex items-center justify-between border-b border-borderSoft p-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accentRed/20">
                   <Bot className="h-4 w-4 text-accentRed" />
                 </div>
                 <div>
-                  <p className="font-semibold text-whitePrimary">Telemetry Assistant</p>
-                  <p className="text-xs text-whiteMuted">AI-powered analysis</p>
+                  <p className="font-semibold text-whitePrimary">Delta Analyst</p>
+                  <p className="text-xs text-whiteMuted">Live telemetry intelligence</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-whiteMuted hover:text-whitePrimary transition-colors"
+                className="text-whiteMuted transition-colors hover:text-whitePrimary"
+                aria-label="Close Delta Analyst"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 space-y-3 overflow-y-auto p-4">
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                      message.sender === 'user'
-                        ? 'bg-accentRed text-white'
-                        : 'bg-bgSecondary text-whitePrimary'
+                      message.sender === "user"
+                        ? "bg-accentRed text-white"
+                        : "bg-bgSecondary text-whitePrimary"
                     }`}
                   >
                     {message.text}
                   </div>
                 </motion.div>
               ))}
-              
-              {/* Typing Indicator */}
+
               {isTyping && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   className="flex justify-start"
                 >
-                  <div className="bg-bgSecondary rounded-lg px-3 py-2">
+                  <div className="rounded-lg bg-bgSecondary px-3 py-2">
                     <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-whiteMuted rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-whiteMuted rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-whiteMuted rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-whiteMuted" />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-whiteMuted [animation-delay:150ms]" />
+                      <div className="h-2 w-2 animate-bounce rounded-full bg-whiteMuted [animation-delay:300ms]" />
                     </div>
                   </div>
                 </motion.div>
@@ -167,29 +213,37 @@ const TelemetryChatbot = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input */}
-            <div className="p-4 border-t border-borderSoft">
+            <div className="border-t border-borderSoft p-4">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask about telemetry data..."
-                  className="flex-1 bg-bgPrimary border border-borderSoft rounded-lg px-3 py-2 text-sm text-whitePrimary placeholder-whiteMuted focus:outline-none focus:border-accentRed"
-                  disabled={isTyping}
+                  onKeyDown={handleKeyDown}
+                  placeholder={telemetryReady ? "Ask about telemetry data..." : "Load telemetry first"}
+                  className="min-w-0 flex-1 rounded-lg border border-borderSoft bg-bgPrimary px-3 py-2 text-sm text-whitePrimary placeholder-whiteMuted focus:border-accentRed focus:outline-none"
+                  disabled={isTyping || !telemetryReady}
                 />
                 <button
                   onClick={handleSendMessage}
-                  disabled={!inputValue.trim() || isTyping}
-                  className="bg-accentRed hover:bg-red-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white rounded-lg p-2 transition-colors"
+                  disabled={!inputValue.trim() || isTyping || !telemetryReady}
+                  className="rounded-lg bg-accentRed p-2 text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-gray-700"
+                  aria-label="Send message"
                 >
                   <Send className="h-4 w-4" />
                 </button>
               </div>
-              <p className="text-xs text-whiteMuted mt-2 text-center">
-                Powered by DeltaBox AI • Mock integration
-              </p>
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+                <p className="text-center text-xs text-whiteMuted">
+                  Powered by DeltaBox AI - Live telemetry intelligence
+                </p>
+                {error && (
+                  <div className="flex items-center gap-1 text-xs text-red-400">
+                    <AlertCircle className="h-3 w-3" />
+                    <span>{error}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

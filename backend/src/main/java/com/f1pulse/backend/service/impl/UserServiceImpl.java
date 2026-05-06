@@ -59,7 +59,12 @@ public List<UserSummaryResponse> getAllUsers(int page, int size) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        user.setFavoriteDriver(request.getFavoriteDriver());
+        String favoriteDriver = request.getFavoriteDriver();
+        if (favoriteDriver != null && !favoriteDriver.isBlank() && !favoriteDriver.matches("^[A-Z0-9_-]{1,32}$")) {
+            throw new IllegalArgumentException("Invalid favorite driver");
+        }
+
+        user.setFavoriteDriver(favoriteDriver == null || favoriteDriver.isBlank() ? null : favoriteDriver);
         userRepository.save(user);
 
         return new UserResponse(
