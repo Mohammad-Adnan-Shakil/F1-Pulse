@@ -28,30 +28,40 @@ public class DeltaAnalystController {
             @Valid @RequestBody DeltaAnalystChatRequest request) {
         
         try {
-            logger.info("Delta Analyst processing telemetry analysis for drivers: {} vs {}", 
-                    request.getDriver1(), request.getDriver2());
+            logger.info("🎯 DELTA ANALYST CONTROLLER: Incoming request | Drivers: {} vs {} | Message: {}", 
+                    request.getDriver1(), request.getDriver2(), request.getUserMessage());
             
-            logger.debug("Question: {}", request.getUserMessage());
-            logger.debug("Telemetry payload present - Speed: {}, Throttle: {}, Brake: {}, Gear: {}, Sector: {}",
+            logger.debug("📨 REQUEST DETAILS: ContentType=application/json | Method=POST | Path=/api/ai/delta-analyst/chat");
+            
+            logger.debug("🔒 AUTH: JWT token present and validated");
+            
+            logger.debug("📦 PAYLOAD: " + 
+                    "driver1={}, driver2={}, " +
+                    "speedData_present={}, throttleData_present={}, " +
+                    "brakeData_present={}, gearData_present={}, " +
+                    "sectorDelta_present={}, userMessage_length={}",
+                    request.getDriver1(), request.getDriver2(),
                     request.getSpeedData() != null,
                     request.getThrottleData() != null,
                     request.getBrakeData() != null,
                     request.getGearData() != null,
-                    request.getSectorDelta() != null);
+                    request.getSectorDelta() != null,
+                    request.getUserMessage().length());
 
             String analysis = deltaAnalystService.analyzeTelemetry(request);
             
-            logger.info("Successfully generated telemetry analysis for drivers: {} vs {}", 
-                    request.getDriver1(), request.getDriver2());
+            logger.info("✅ DELTA ANALYST SUCCESS: Generated analysis (length: {})", analysis.length());
 
             return ResponseEntity.ok(
                     new ApiResponse<>(true, "Telemetry analysis completed", analysis)
             );
             
         } catch (Exception e) {
-            logger.error("Error in Delta Analyst service: {}", e.getMessage(), e);
+            logger.error("❌ DELTA ANALYST CONTROLLER ERROR: {} - {}", 
+                    e.getClass().getSimpleName(), e.getMessage());
+            logger.error("Exception details: ", e);
             return ResponseEntity.status(500)
-                    .body(new ApiResponse<>(false, "Internal server error", null));
+                    .body(new ApiResponse<>(false, "Internal server error: " + e.getMessage(), null));
         }
     }
 

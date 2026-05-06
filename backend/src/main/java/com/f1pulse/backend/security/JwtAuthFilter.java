@@ -50,10 +50,16 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         try {
+            // 🔍 Step 0: Log incoming request
+            String method = request.getMethod();
+            String path = request.getRequestURI();
+            logger.debug("🔐 JWT FILTER: {} {} | Remote: {}", method, path, request.getRemoteAddr());
+            
             // 🔍 Step 1: Extract token from Authorization header
             final String authHeader = request.getHeader("Authorization");
             
             if (authHeader == null || !authHeader.startsWith(BEARER_PREFIX)) {
+                logger.debug("🔐 JWT FILTER: No valid Authorization header for {} {}", method, path);
                 // No token - proceed without authentication
                 filterChain.doFilter(request, response);
                 return;
@@ -63,7 +69,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String token = authHeader.substring(BEARER_PREFIX.length()).trim();
             
             if (token.isEmpty()) {
-                logger.debug("Empty token provided");
+                logger.debug("🔐 JWT FILTER: Empty token for {} {}", method, path);
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -72,14 +78,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String email = jwtService.extractUsername(token);
 
             if (email == null) {
-                logger.debug("Could not extract username from token");
+                logger.debug("🔐 JWT FILTER: Could not extract email from token for {} {}", method, path);
                 filterChain.doFilter(request, response);
                 return;
             }
 
             // 🔍 Step 4: Check if user is already authenticated
             if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                logger.debug("User already authenticated: {}", email);
+                logger.debug("🔐 JWT FILTER: User already authenticated: {} for {} {}", email, method, path);
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -89,14 +95,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             try {
                 userDetails = userDetailsService.loadUserByUsername(email);
             } catch (UsernameNotFoundException e) {
-                logger.debug("User not found: {}", email);
+                logger.debug("🔐 JWT FILTER: User not found: {} for {} {}", email, method, path);
                 filterChain.doFilter(request, response);
                 return;
             }
 
             // 🔍 Step 6: Validate token
             if (!jwtService.isTokenValid(token, userDetails)) {
-                logger.debug("Token validation failed for user: {}", email);
+                logger.debug("🔐 JWT FILTER: Token validation failed for user: {} on {} {}", email, method, path);
                 filterChain.doFilter(request, response);
                 return;
             }

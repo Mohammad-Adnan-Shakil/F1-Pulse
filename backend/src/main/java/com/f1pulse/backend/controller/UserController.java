@@ -57,33 +57,35 @@ public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser() {
             @Valid @RequestBody FavoriteDriverRequest request) {
         
         try {
-            logger.info("Updating profile for user with favorite driver: {}", request.getFavoriteDriver());
+            logger.info("🎯 USER CONTROLLER: PUT /api/user/profile | Favorite Driver: {}", request.getFavoriteDriver());
             
+            logger.debug("🔒 AUTH: JWT validation required");
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String email = auth.getName();
+            logger.debug("👤 Authenticated user: {}", email);
             
-            logger.debug("Authenticated user email: {}", email);
-
+            logger.info("💾 UserService.updateFavoriteDriver() called for email: {}", email);
             UserResponse user = userService.updateFavoriteDriver(email, request);
             
-            logger.info("Successfully updated favorite driver for user: {}", email);
+            logger.info("✅ USER CONTROLLER SUCCESS: Favorite driver updated to: {}", user.getFavoriteDriver());
 
             return ResponseEntity.ok(
                     new ApiResponse<>(true, "Profile updated successfully", user)
             );
             
         } catch (UserNotFoundException e) {
-            logger.error("User not found during profile update: {}", e.getMessage());
+            logger.error("❌ USER NOT FOUND: {}", e.getMessage());
             return ResponseEntity.status(404)
                     .body(new ApiResponse<>(false, "User not found", null));
 
         } catch (IllegalArgumentException e) {
-            logger.warn("Invalid profile update request: {}", e.getMessage());
+            logger.warn("❌ VALIDATION ERROR: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(new ApiResponse<>(false, e.getMessage(), null));
                     
         } catch (Exception e) {
-            logger.error("Error updating profile: {}", e.getMessage(), e);
+            logger.error("❌ USER CONTROLLER ERROR: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            logger.error("Exception trace: ", e);
             return ResponseEntity.status(500)
                     .body(new ApiResponse<>(false, "Internal server error", null));
         }

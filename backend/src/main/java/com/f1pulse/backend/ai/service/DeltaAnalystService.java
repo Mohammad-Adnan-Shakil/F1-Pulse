@@ -19,19 +19,38 @@ public class DeltaAnalystService {
 
     public String analyzeTelemetry(DeltaAnalystChatRequest request) {
         try {
-            log.info("Delta Analyst service processing telemetry analysis: {}", request.getUserMessage());
+            log.info("🚀 DELTA ANALYST: Service received request for drivers {} vs {} | Question: {}", 
+                    request.getDriver1(), request.getDriver2(), request.getUserMessage());
+            
+            log.debug("📊 TELEMETRY DATA: Speed={}, Throttle={}, Brake={}, Gear={}, SectorDelta={}", 
+                    request.getSpeedData() != null, 
+                    request.getThrottleData() != null,
+                    request.getBrakeData() != null,
+                    request.getGearData() != null,
+                    request.getSectorDelta() != null);
             
             String systemPrompt = DeltaAnalystPrompts.DELTA_ANALYST_SYSTEM_PROMPT;
-            String telemetryContext = new TelemetryPromptContext(request).toPromptText();
-            String userPrompt = DeltaAnalystPrompts.buildUserPrompt(request.getUserMessage(), telemetryContext);
+            log.debug("📝 System prompt loaded (length: {})", systemPrompt.length());
             
+            String telemetryContext = new TelemetryPromptContext(request).toPromptText();
+            log.debug("🔍 Telemetry context built: {}", telemetryContext.substring(0, Math.min(200, telemetryContext.length())));
+            
+            String userPrompt = DeltaAnalystPrompts.buildUserPrompt(request.getUserMessage(), telemetryContext);
+            log.debug("💬 User prompt built (length: {})", userPrompt.length());
+            
+            log.info("🔗 Calling Groq API with max_tokens=350, temperature=0.25");
             String response = groqApiService.makeRequest(systemPrompt, userPrompt, 350, 0.25);
+            
+            log.info("✅ Groq API response received (length: {})", response != null ? response.length() : 0);
+            
             return AiResponseFormatter.isUnavailable(response)
                     ? AiResponseFormatter.deltaAnalystUnavailable()
                     : response;
             
         } catch (Exception e) {
-            log.error("Unexpected error in Delta Analyst service: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
+            log.error("❌ DELTA ANALYST ERROR: {} - {} | Cause: {}", 
+                    e.getClass().getSimpleName(), e.getMessage(), e.getCause() != null ? e.getCause().getMessage() : "N/A");
+            log.error("Stack trace: ", e);
             return AiResponseFormatter.deltaAnalystUnavailable();
         }
     }

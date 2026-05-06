@@ -61,12 +61,15 @@ public class GroqApiService {
      */
     public String makeRequest(String systemPrompt, String userMessage, Integer maxTokens, Double temperature) {
         if (apiKey == null || apiKey.isEmpty()) {
-            log.warn("GROQ_API_KEY not configured - Groq API service unavailable");
+            log.error("🔑 GROQ: API_KEY NOT CONFIGURED - Groq API service unavailable");
             return "AI service temporarily unavailable.";
         }
         
         try {
-            log.info("Groq API service processing request: {}", userMessage.substring(0, Math.min(50, userMessage.length())));
+            log.info("🚀 GROQ: Making request | Model={} | MaxTokens={} | Temperature={}", 
+                    model, maxTokens != null ? maxTokens : 300, temperature != null ? temperature : 0.3);
+            log.debug("📝 GROQ: User message (first 100 chars): {}", 
+                    userMessage.substring(0, Math.min(100, userMessage.length())));
             
             // Build Groq API request
             Map<String, Object> requestBody = new HashMap<>();
@@ -89,30 +92,37 @@ public class GroqApiService {
             String authorizationHeader = "Bearer " + trimmedApiKey;
             headers.set("Authorization", authorizationHeader);
             
-            log.debug("Using API URL: {}", apiUrl);
-            log.debug("Using model: {}", model);
-            log.debug("Authorization header format: Bearer {}", trimmedApiKey.substring(0, Math.min(5, trimmedApiKey.length())) + "...");
+            log.info("🔗 GROQ: Calling API at {} with API key (first 10 chars): {}", 
+                    apiUrl, trimmedApiKey.substring(0, Math.min(10, trimmedApiKey.length())) + "...");
+            log.debug("🔒 GROQ: Authorization header set with full API key");
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
             // Call Groq API
-            log.debug("Calling Groq API at: {}", apiUrl);
+            log.info("📤 GROQ: Sending HTTP POST to {}", apiUrl);
             var response = restTemplate.postForEntity(apiUrl, request, String.class);
 
+            log.info("📥 GROQ: Response status: {}", response.getStatusCode());
+            
             if (!response.getStatusCode().is2xxSuccessful()) {
-                log.error("Groq API returned status: {} - Response: {}", response.getStatusCode(), response.getBody());
+                log.error("❌ GROQ: API returned error status: {} | Body: {}", 
+                        response.getStatusCode(), response.getBody());
                 return "AI service temporarily unavailable.";
             }
+
+            log.debug("✅ GROQ: Response is successful (2xx)");
 
             // Parse response and extract message
             JsonNode responseJson = objectMapper.readTree(response.getBody());
             if (responseJson == null) {
-                log.error("Null response from Groq API");
+                log.error("❌ GROQ: Null response body from API");
                 return "AI service temporarily unavailable.";
             }
             
+            log.debug("📊 GROQ: Response JSON structure: {}", responseJson.fieldNames());
+            
             if (!responseJson.has("choices") || responseJson.get("choices").isEmpty()) {
-                log.error("Invalid response structure from Groq API: {}", response.getBody());
+                log.error("❌ GROQ: Invalid response structure - missing 'choices': {}", response.getBody());
                 return "AI service temporarily unavailable.";
             }
 
@@ -125,18 +135,21 @@ public class GroqApiService {
             String aiMessage = choice.get("message").get("content").asText();
             
             if (aiMessage == null || aiMessage.trim().isEmpty()) {
-                log.error("Empty message content from Groq API");
+                log.error("❌ GROQ: Empty message content returned");
                 return "AI service temporarily unavailable.";
             }
 
-            log.info("Generated AI response: {}", aiMessage.substring(0, Math.min(100, aiMessage.length())));
+            log.info("✅ GROQ: Generated AI response successfully (length: {})", aiMessage.length());
             return aiMessage;
 
         } catch (org.springframework.web.client.ResourceAccessException e) {
-            log.error("Network error accessing Groq API: {}", e.getMessage());
+            log.error("❌ GROQ NETWORK ERROR: Cannot connect to Groq API at {} | Message: {}", 
+                    apiUrl, e.getMessage());
+            log.error("Groq network error details: ", e);
             return "AI service temporarily unavailable.";
         } catch (org.springframework.web.client.HttpClientErrorException e) {
-            log.error("HTTP client error calling Groq API: {} - {}", e.getStatusCode(), e.getMessage());
+            log.error("❌ GROQ HTTP CLIENT ERROR: Status={} | Message={}", e.getStatusCode(), e.getMessage());
+            log.error("Response body: {}", e.getResponseBodyAsString());
             return "AI service temporarily unavailable.";
         } catch (org.springframework.web.client.HttpServerErrorException e) {
             log.error("HTTP server error from Groq API: {} - {}", e.getStatusCode(), e.getMessage());
