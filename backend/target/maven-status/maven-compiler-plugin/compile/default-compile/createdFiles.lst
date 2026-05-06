@@ -27,6 +27,7 @@ com\f1pulse\backend\dto\DriverComparisonResponse$DriverComparison.class
 com\f1pulse\backend\dto\TelemetryAnalysisRequest.class
 com\f1pulse\backend\exception\ErrorResponse.class
 com\f1pulse\backend\dto\FavoriteDriverRequest.class
+com\f1pulse\backend\ai\prompts\DeltaAnalystPrompts.class
 com\f1pulse\CorsConfig.class
 com\f1pulse\backend\ai\service\SimulationServiceImpl.class
 com\f1pulse\backend\model\HistoricalSeason.class
@@ -35,6 +36,7 @@ com\f1pulse\backend\dto\UserResponse.class
 com\f1pulse\backend\dto\DriverComparisonRequest.class
 com\f1pulse\backend\exception\UserAlreadyExistsException.class
 com\f1pulse\backend\ai\service\RaceEngineerService.class
+com\f1pulse\backend\ai\prompts\RaceEngineerPrompts.class
 com\f1pulse\backend\ai\service\PredictionServiceImpl.class
 com\f1pulse\backend\repository\ConstructorRepository.class
 com\f1pulse\backend\repository\RaceRepository.class
@@ -69,6 +71,7 @@ com\f1pulse\backend\ai\service\DriverComparisonServiceImpl.class
 com\f1pulse\backend\dto\UserSummaryResponse.class
 com\f1pulse\backend\controller\AuthController.class
 com\f1pulse\backend\repository\HistoricalQualifyingRepository.class
+com\f1pulse\backend\ai\service\GroqApiService.class
 com\f1pulse\backend\service\MLClientService.class
 com\f1pulse\backend\ai\controller\DriverInsightsController.class
 com\f1pulse\backend\dto\PodiumDriverDTO.class

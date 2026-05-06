@@ -48,6 +48,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\Simula
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\model\DriverDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\model\HistoricalConstructorStandings.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\AIController.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\prompts\RaceEngineerPrompts.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\DriverIntelligenceResponse.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\controller\DriverComparisonController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\DriverComparisonService.java
@@ -99,6 +100,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\RaceContex
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\PodiumDriverDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\HistoricalConstructorRepository.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\impl\AuthServiceImpl.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\GroqApiService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\config\AppConfig.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\exception\UserNotFoundException.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\PredictionService.java
@@ -106,6 +108,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\Teleme
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\DriverRepository.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\util\PythonExecutor.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\MultiSimulationRequestDTO.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\prompts\DeltaAnalystPrompts.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\SimulationResponseDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\config\DatasourceLoggingConfig.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\PredictionResponseDTO.java
