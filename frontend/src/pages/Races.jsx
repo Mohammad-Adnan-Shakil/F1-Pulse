@@ -6,7 +6,7 @@ import useFetch from "../hooks/useFetch";
 import usePageTitle from "../hooks/usePageTitle";
 import { formatRaceDate } from "../utils/formatters";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from "../services/api";
 
 const Races = () => {
   usePageTitle("Races");
@@ -33,7 +33,7 @@ const Races = () => {
     setPodiumLoading(prev => ({ ...prev, [raceId]: true }));
     
     try {
-      const response = await axios.get(`/api/races/${raceId}/podium`);
+      const response = await api.get(`/races/${raceId}/podium`);
       if (response.data?.data) {
         setPodiumData(prev => ({ ...prev, [raceId]: response.data.data }));
       }

@@ -25,14 +25,14 @@ public class TelemetryCache {
     @Column(name = "meeting_key", nullable = false, length = 20)
     private String meetingKey;
 
-    @Column(name = "telemetry_json", columnDefinition = "jsonb", nullable = false)
+    @Column(name = "telemetry_json", nullable = false, columnDefinition = "TEXT")
     private String telemetryJson;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Timestamp createdAt;
 
-    @Column(name = "last_accessed", nullable = false, updatable = false)
+    @Column(name = "last_accessed", nullable = false)
     private Timestamp lastAccessed;
 
     // Constructors

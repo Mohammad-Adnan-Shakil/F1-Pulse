@@ -1,6 +1,6 @@
 -- Create users table for authentication
 CREATE TABLE IF NOT EXISTS users (
-    id BIGSERIAL PRIMARY KEY,
+    id IDENTITY PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL DEFAULT '',
     email VARCHAR(255) UNIQUE,
     password VARCHAR(255),
@@ -11,5 +11,3 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-
-COMMIT;

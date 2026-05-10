@@ -8,6 +8,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\FavoriteDrive
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\AuthController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\DriverInsightsService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\util\StatsUtil.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\controller\DeltaAnalystController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\model\HistoricalDriver.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\AdminIngestionController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\config\AsyncConfig.java
@@ -23,6 +24,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\TeamCo
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\HealthController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\util\StatsUtil.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\HistoricalController.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\DeltaAnalystService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\HistoricalConstructorStandingsRepository.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\GoogleAuthRequest.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\MLClientService.java
@@ -38,6 +40,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\UserServi
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\MultiSimulationResponseDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\PredictionServiceImpl.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\SyncMetaRepository.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\TelemetryCacheRepository.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\security\JwtAuthFilter.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\SimulationRequestDTO.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\ConstructorController.java
@@ -51,6 +54,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\prompts\RaceEn
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\DriverIntelligenceResponse.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\controller\DriverComparisonController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\DriverComparisonService.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\entity\TelemetryCache.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\dto\DriverComparisonRequest.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\MLService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\UserRepository.java
@@ -73,6 +77,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\exception\UserAlr
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\controller\DriverInsightsController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\model\Race.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\ConstructorRepository.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\service\TelemetryService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\RaceEngineerService.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\exception\ErrorResponse.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\model\UniqueConstraint.java
@@ -103,6 +108,7 @@ C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\GroqAp
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\config\AppConfig.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\exception\UserNotFoundException.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\service\PredictionService.java
+C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\controller\TelemetryController.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\repository\DriverRepository.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\util\PythonExecutor.java
 C:\projects\DeltaBox\backend\src\main\java\com\f1pulse\backend\ai\dto\MultiSimulationRequestDTO.java

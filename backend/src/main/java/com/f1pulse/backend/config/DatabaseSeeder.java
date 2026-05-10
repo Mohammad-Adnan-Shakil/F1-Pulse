@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  * This ensures seeding only runs once on first deployment to Railway.
  */
 @Component
-@Profile("dev")
+@Profile({"dev", "local"})
 public class DatabaseSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseSeeder.class);

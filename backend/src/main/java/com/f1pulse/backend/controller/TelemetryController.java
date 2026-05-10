@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Production-grade telemetry controller
@@ -102,6 +103,37 @@ public class TelemetryController {
             log.error("Failed to retrieve telemetry data: {}", e.getMessage(), e);
             return ResponseEntity.status(500)
                     .body(new ApiResponse<>(false, "Failed to retrieve telemetry data", null));
+        }
+    }
+
+    /**
+     * Fetch telemetry data via POST (for frontend compatibility)
+     * Accepts season, sessionKey, meetingKey, driverNumber in request body
+     */
+    @PostMapping("/fetch")
+    public ResponseEntity<ApiResponse<String>> fetchTelemetry(@RequestBody Map<String, Object> request) {
+        try {
+            String sessionKey = (String) request.getOrDefault("sessionKey", "latest");
+            String meetingKey = (String) request.getOrDefault("meetingKey", "latest");
+            Object driverNumObj = request.getOrDefault("driverNumber", "1");
+            Integer driverNumber = driverNumObj instanceof Number 
+                ? ((Number) driverNumObj).intValue() 
+                : Integer.parseInt(String.valueOf(driverNumObj));
+            
+            log.info("POST /fetch telemetry for driver {} in meeting {} session: {}", driverNumber, meetingKey, sessionKey);
+            
+            String telemetryData = telemetryService.getTelemetryData(sessionKey, driverNumber, meetingKey);
+            
+            if (telemetryData != null) {
+                return ResponseEntity.ok(new ApiResponse<>(true, "Telemetry data retrieved successfully", telemetryData));
+            } else {
+                return ResponseEntity.status(404)
+                        .body(new ApiResponse<>(false, "Telemetry data not available", null));
+            }
+        } catch (Exception e) {
+            log.error("Failed to fetch telemetry data: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                    .body(new ApiResponse<>(false, "Failed to fetch telemetry data: " + e.getMessage(), null));
         }
     }
 }

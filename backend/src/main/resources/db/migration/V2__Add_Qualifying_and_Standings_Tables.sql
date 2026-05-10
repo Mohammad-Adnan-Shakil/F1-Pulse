@@ -5,7 +5,7 @@
 -- HISTORICAL QUALIFYING RESULTS
 -- ========================================
 CREATE TABLE IF NOT EXISTS historical_qualifying (
-    id BIGSERIAL PRIMARY KEY,
+    id IDENTITY PRIMARY KEY,
     race_id BIGINT NOT NULL,
     driver_id BIGINT NOT NULL,
     constructor_id BIGINT,
@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_historical_qualifying_driver ON historical_qualif
 -- HISTORICAL DRIVER STANDINGS
 -- ========================================
 CREATE TABLE IF NOT EXISTS historical_driver_standings (
-    id BIGSERIAL PRIMARY KEY,
+    id IDENTITY PRIMARY KEY,
     year INTEGER NOT NULL,
     driver_id BIGINT NOT NULL,
     position INTEGER, -- Championship position
@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_historical_driver_standings_driver ON historical_
 -- HISTORICAL CONSTRUCTOR STANDINGS
 -- ========================================
 CREATE TABLE IF NOT EXISTS historical_constructor_standings (
-    id BIGSERIAL PRIMARY KEY,
+    id IDENTITY PRIMARY KEY,
     year INTEGER NOT NULL,
     constructor_id BIGINT NOT NULL,
     position INTEGER, -- Championship position
@@ -60,4 +60,4 @@ CREATE TABLE IF NOT EXISTS historical_constructor_standings (
 CREATE INDEX IF NOT EXISTS idx_historical_constructor_standings_year ON historical_constructor_standings(year);
 CREATE INDEX IF NOT EXISTS idx_historical_constructor_standings_constructor ON historical_constructor_standings(constructor_id);
 
-COMMIT;
+

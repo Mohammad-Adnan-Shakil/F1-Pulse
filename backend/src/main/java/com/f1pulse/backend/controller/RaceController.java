@@ -70,6 +70,37 @@ public class RaceController {
         }
     }
 
+    @GetMapping("/{raceId}")
+    public ResponseEntity<?> getRaceById(@PathVariable Long raceId) {
+        logger.info("GET /api/races/{} - Request received", raceId);
+        try {
+            Optional<Race> race = raceRepository.findById(raceId);
+            if (race.isPresent()) {
+                logger.info("Race found: {}", race.get().getRaceName());
+                return ResponseEntity.ok(race.get());
+            } else {
+                logger.info("Race not found with ID: {}", raceId);
+                return ResponseEntity.status(404).body("Race not found");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to fetch race with ID: {}", raceId, e);
+            return ResponseEntity.status(500).body("Failed to fetch race: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/{raceId}/results")
+    public ResponseEntity<?> getRaceResults(@PathVariable Long raceId) {
+        logger.info("GET /api/races/{}/results - Request received", raceId);
+        try {
+            // For now, return empty results array as mock
+            // In production, this would query actual race results from database
+            return ResponseEntity.ok(new ArrayList<>());
+        } catch (Exception e) {
+            logger.error("Failed to fetch results for race ID: {}", raceId, e);
+            return ResponseEntity.status(500).body("Failed to fetch results: " + e.getMessage());
+        }
+    }
+
     @GetMapping("/{raceId}/podium")
     public ResponseEntity<ApiResponse<List<PodiumDriverDTO>>> getRacePodium(@PathVariable Long raceId) {
         logger.info("GET /api/races/{}/podium - Request received", raceId);

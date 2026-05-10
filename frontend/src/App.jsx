@@ -135,7 +135,7 @@ function App() {
       <Route
         path="/telemetry"
         element={
-          <RequireFeatureAccess featureName="Telemetry Intelligence">
+          <RequireFeatureAccess featureName="Telemetry">
             <MainLayout>
               <TelemetryPage />
             </MainLayout>

@@ -25,6 +25,7 @@ com\f1pulse\backend\ai\service\PredictionService.class
 com\f1pulse\backend\controller\RaceController.class
 com\f1pulse\backend\dto\DriverComparisonResponse$DriverComparison.class
 com\f1pulse\backend\exception\ErrorResponse.class
+com\f1pulse\backend\service\TelemetryService.class
 com\f1pulse\backend\dto\FavoriteDriverRequest.class
 com\f1pulse\backend\ai\prompts\DeltaAnalystPrompts.class
 com\f1pulse\CorsConfig.class
@@ -44,12 +45,15 @@ com\f1pulse\backend\security\JwtAuthFilter.class
 com\f1pulse\backend\repository\DriverRepository.class
 com\f1pulse\backend\model\Race.class
 com\f1pulse\backend\ai\service\SimulationService.class
+com\f1pulse\backend\entity\TelemetryCache.class
 com\f1pulse\backend\model\Driver.class
 com\f1pulse\backend\controller\AdminController.class
 com\f1pulse\backend\config\DatabaseSeeder.class
 com\f1pulse\backend\model\Prediction.class
+com\f1pulse\backend\repository\TelemetryCacheRepository.class
 com\f1pulse\backend\service\impl\UserServiceImpl.class
 com\f1pulse\backend\ai\dto\MultiSimulationRequestDTO.class
+com\f1pulse\backend\controller\TelemetryController.class
 com\f1pulse\backend\repository\HistoricalConstructorStandingsRepository.class
 com\f1pulse\backend\service\UserService.class
 com\f1pulse\backend\controller\ConstructorController.class
@@ -76,6 +80,7 @@ com\f1pulse\backend\dto\PodiumDriverDTO.class
 com\f1pulse\backend\config\AppConfig.class
 com\f1pulse\backend\service\HistoricalDataIngestionService.class
 com\f1pulse\backend\ai\controller\RaceEngineerController.class
+com\f1pulse\backend\ai\service\DeltaAnalystService.class
 com\f1pulse\backend\model\HistoricalResult.class
 com\f1pulse\backend\service\SyncScheduler.class
 com\f1pulse\backend\model\HistoricalConstructorStandings.class
@@ -116,3 +121,4 @@ com\f1pulse\backend\service\AuthService.class
 com\f1pulse\backend\config\DatasourceLoggingConfig.class
 com\f1pulse\backend\repository\HistoricalResultRepository.class
 com\f1pulse\backend\ai\dto\RaceContextRequest.class
+com\f1pulse\backend\ai\controller\DeltaAnalystController.class
